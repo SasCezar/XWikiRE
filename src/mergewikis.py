@@ -1,14 +1,19 @@
+import collections
 import datetime
-import re
 import string
 import traceback
-import collections
 import unicodedata
+import multiprocessing as mp
 from typing import List, Dict, Set
+
+import nltk
 from dateutil.parser import *
 from nltk.tokenize.util import align_tokens
-import nltk
+from pymongo import MongoClient
+
+
 import config
+from utils import get_chunks
 
 FACT_DELIMITER_TOKEN = " "
 
@@ -17,7 +22,14 @@ SECTION_DELIMITER_TOKEN = "\n\n"
 BCE_TOKEN = " BC"
 BC_DATE_FORMAT = '%d %B %Y'
 
-TOKENIZE_RE = re.compile("(\W)")
+SEPARATOR_TOKENS = {
+    " ": 1,
+    "\n": 2,
+    "SENTENCE_SEPARATOR": 3,
+    "\n\n": 4,
+}
+
+BATCH_DUMP_SIZE = 500
 
 
 def get_properties_ids(wikidata_doc: Dict) -> Set:
@@ -85,11 +97,11 @@ def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     return fact
 
 
-def _parse_bce_date(date: datetime, calendar_model: Dict):
+def _parse_bce_date(date: datetime, calendar_model: Dict) -> str:
     return date.year + BCE_TOKEN
 
 
-def _parse_ce_date(date: datetime, calendar_model: Dict):
+def _parse_ce_date(date: datetime, calendar_model: Dict) -> str:
     return date.strftime(BC_DATE_FORMAT)
 
 
@@ -100,14 +112,6 @@ def create_time_fact(date: str, calendar_model: Dict):
     else:
         fact = {"value": _parse_ce_date(parsed_date, calendar_model)}
     return fact
-
-
-SEPARATOR_TOKENS = {
-    " ": 1,
-    "\n": 2,
-    "SENTENCE_SEPARATOR": 3,
-    "\n\n": 4,
-}
 
 
 def get_break_levels(article_text, tokens):
@@ -144,25 +148,26 @@ def tokenizer(text):
 def tokenize(merged_document):
     article_text = merged_document['text']
     tokens = tokenizer(article_text)
-
+    merged_document['string_sequence'] = tokens
     break_levels = get_break_levels(article_text, tokens)
     merged_document['break_levels'] = break_levels
 
     for property in merged_document['properties']:
         merged_document['properties'][property]['label'] = tokenizer(merged_document['properties'][property]['label'])
 
-    for fact in merged_document['facts']:
-        merged_document['facts'][fact]['value'] = tokenizer(merged_document['facts'][fact]['value'])
+    for prop in merged_document['facts']:
+        for fact in merged_document['facts'][prop]:
+            fact['value_sequence'] = tokenizer(fact['value'])
 
 
-def tag_text(merged_document):
+def pos_tag_text(merged_document):
     pass
 
 
 def extract_features(merged_document: Dict) -> Dict:
     tokenize(merged_document)
-    # tag_text(merged_document)
-
+    # pos_tags = pos_tag_text(merged_document['string_sequence'])
+    # merged_document['pos_tags'] = pos_tags
     return merged_document
 
 
@@ -171,13 +176,17 @@ def format_text(sections: List) -> str:
 
 
 def merge_wikis():
-    wikidata = {}
-    wikipedia = []
+    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
+    db = client[config.DB]
+    wikidata = db[config.WIKIDATA_COLLECTION]
+    wikipedia = db[config.WIKIPEDIA_COLLECTION]
+    wikimerge = db[config.WIKIMERGE_COLLECTION]
 
     wikidata_id_ref = "labels.{}.value".format(config.LANG)
     prop_cache = {}
 
-    for page in wikipedia:
+    processed_docs = []
+    for page in wikipedia.find({"text"}):
         try:
             label = page['title'].lower()
             wikidata_doc = wikidata.find_one({wikidata_id_ref: label}, {"_id": 0})
@@ -228,5 +237,29 @@ def merge_wikis():
             document_features = extract_features(merged_document)
             merged_document.update(document_features)
 
+            processed_docs.append(merged_document)
+
+            if len(processed_docs) >= BATCH_DUMP_SIZE:
+                wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+                processed_docs = []
+
         except:
             traceback.print_exc()
+
+    if processed_docs:
+        wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+
+    return
+
+
+if __name__ == '__main__':
+    chunk_size = 100000
+    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
+    db = client[config.DB]
+    wikipedia = db[config.WIKIPEDIA_COLLECTION]
+    documents_id = list(wikipedia.find({}, {"wikibase_item": 1, "_id": 0}).sort("wikibase_item"))
+    client.close()
+    pool = mp.Pool(processes=config.NUM_WORKERS)
+    pool.map(merge_wikis(), get_chunks(documents_id, chunk_size))
+    pool.close()
+    pool.join()
