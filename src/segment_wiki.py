@@ -40,6 +40,7 @@ Command line arguments
    :ellipsis: 0, -10
 """
 
+import pickle
 import argparse
 import json
 import logging
@@ -85,12 +86,13 @@ def segment_all_articles(file_path, min_article_character=200, workers=None, inc
 
 
 def segment_and_write_all_articles(file_path, output_file, min_article_character=200, workers=None,
-                                   include_interlinks=False):
+                                   include_interlinks=False, wikidata_mapping=''):
     """Write article title and sections to `output_file` (or stdout, if output_file is None).
     The output format is one article per line, in json-line format with 4 fields::
         'title' - title of article,
         'section_titles' - list of titles of sections,
         'section_texts' - list of content from sections,
+        (Optional) 'wikidata_mapping' - Path of wikipedia ids to wikidata ids
         (Optional) 'section_interlinks' - list of interlinks in the article.
     Parameters
     ----------
@@ -114,6 +116,12 @@ def segment_and_write_all_articles(file_path, output_file, min_article_character
     try:
         article_stream = segment_all_articles(file_path, min_article_character, workers=workers,
                                               include_interlinks=include_interlinks)
+
+        if wikidata_mapping:
+            with open(wikidata_mapping, 'rb') as handle:
+                wikidata_mapping_dict = pickle.load(handle)
+
+        skipped = 0
         for idx, article in enumerate(article_stream):
             article_id, article_title, article_sections = article[0], article[1], article[2]
             if include_interlinks:
@@ -128,6 +136,14 @@ def segment_and_write_all_articles(file_path, output_file, min_article_character
             if include_interlinks:
                 output_data["interlinks"] = interlinks
 
+            if wikidata_mapping:
+                try:
+                    output_data['wikidata_id'] = wikidata_mapping_dict[article_id]
+                except:
+                    skipped += 1
+                    logging.info("Article with WikipediaID: {}, and title: \'{}\', was not found".format(output_data['id'], output_data['title']))
+                    continue
+
             for section_heading, section_content in article_sections:
                 output_data["section_titles"].append(section_heading)
                 output_data["section_texts"].append(section_content)
@@ -135,7 +151,7 @@ def segment_and_write_all_articles(file_path, output_file, min_article_character
             if (idx + 1) % 100000 == 0:
                 logger.info("processed #%d articles (at %r now)", idx + 1, article_title)
             outfile.write((json.dumps(output_data) + "\n").encode('utf-8'))
-
+        logging.info("Skipped {} articles.".format(skipped))
     finally:
         if output_file is not None:
             outfile.close()
@@ -340,6 +356,14 @@ if __name__ == "__main__":
              '"interlinks": {"article_title_1": "interlink_text_1", "article_title_2": "interlink_text_2", ...}',
         action='store_true'
     )
+
+    parser.add_argument(
+        '-wm', '--wikidata-mapping',
+        help='Path of the mapping for Wikipedia ID to Wikidata IDs articles.'
+             'The mappings format is a pickle dict dump. Default: \'\' - No mapping',
+        type=str,
+        default=""
+    )
     args = parser.parse_args()
 
     logger.info("running %s", " ".join(sys.argv))
@@ -347,7 +371,8 @@ if __name__ == "__main__":
         args.file, args.output,
         min_article_character=args.min_article_character,
         workers=args.workers,
-        include_interlinks=args.include_interlinks
+        include_interlinks=args.include_interlinks,
+        wikidata_mapping=args.wikidata_mapping
     )
 
     logger.info("finished running %s", sys.argv[0])
