@@ -10,6 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def extract_wikidata_to_wikipedia_mapping(file_in, file_out):
+    """
+    Extracts the wikipedia to wikidata id mapping
+    :param file_in:
+    :param file_out:
+    :return:
+    """
     mapping = {}
     with open(file_in, "rt", encoding="ANSI") as inf, open(file_out, "wb") as outf:
         for line in inf:

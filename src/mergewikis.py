@@ -31,10 +31,20 @@ BATCH_DUMP_SIZE = 10
 
 
 def get_properties_ids(claims: Dict) -> Set:
+    """
+    Returns a set of properties keys
+    :param claims:
+    :return:
+    """
     return set(claims.keys())
 
 
 def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
+    """
+    Cleans the documents in docs lists
+    :param docs:
+    :return:
+    """
     clean_docs = []
     for doc in docs:
         try:
@@ -49,7 +59,12 @@ DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels']
 
 
 def _clean_doc(doc: Dict) -> Dict:
-    doc['label_en'] = doc['labels']['en']['value']
+    """
+    Removes unwanted information from the document
+    :param doc:
+    :return:
+    """
+    # doc['label_en'] = doc['labels']['en']['value']
     doc['label'] = doc['labels'][config.LANG]['value']
     doc['aliases'] = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
 
@@ -62,6 +77,11 @@ def _clean_doc(doc: Dict) -> Dict:
 
 
 def get_objects_id(claims: Dict) -> List:
+    """
+    Given a list of claims returns a list of unique wikidata ids
+    :param claims:
+    :return:
+    """
     ids = set()
     for prop in claims:
         for claim in claims[prop]:
@@ -85,6 +105,11 @@ def get_objects_id(claims: Dict) -> List:
 
 
 def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
+    """
+    Given a list of documents, returns a dict containing the ids of the documents a keys, the dict as value
+    :param documents:
+    :return:
+    """
     res = {}
     for doc in documents:
         res[doc['id']] = doc
@@ -181,6 +206,7 @@ def format_text(sections: List) -> str:
 
 NO_UNIT = {'label': ''}
 
+
 def merge_wikis(limit):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
@@ -221,7 +247,7 @@ def merge_wikis(limit):
                             facts[prop_id].append(fact)
                         elif datatype == "quantity":
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
-                            amount = claim['mainsnak']['datavalue']['value']['amount'] # TODO Check if +- makes sense
+                            amount = claim['mainsnak']['datavalue']['value']['amount']  # TODO Check if +- makes sense
                             unit = documents_dict[d_id] if d_id in documents_dict else NO_UNIT
                             fact = create_quantity_fact(amount, unit)
                             facts[prop_id].append(fact)
