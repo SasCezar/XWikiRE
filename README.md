@@ -1,5 +1,5 @@
 # WikiReading
-This tool provides a semi-automated creation of the WikiReading dataset as described in the work of [Hewlett et. al.](https://arxiv.org/abs/1608.03542) There are some already built dataset available at their [repository](https://github.com/google-research-datasets/wiki-reading).
+This tool provides a semi-automated creation of the WikiReading dataset as described in the work of [Hewlett et. al.](https://arxiv.org/abs/1608.03542). There are some already built dataset available at their [repository](https://github.com/google-research-datasets/wiki-reading).
 
 ## Requirements
 1. MongoDB
@@ -15,20 +15,16 @@ This tool provides a semi-automated creation of the WikiReading dataset as descr
     ```
     db.wikidata.createIndex({"id": 1})
     ```
-4. Create an index on the label of the languages you want to use.
+4. Download Wikipedia XML dump from [here](https://dumps.wikimedia.org/backup-index.html)
+5. Download the language specific page_props.sql dump from wikipedia dumps [here](https://dumps.wikimedia.org/backup-index.html)
+6. Build the mapping dict between Wikipedia IDs and WIkidata IDs using wiki_prop.py
+7. Transform the XML dump to JSON using the segment_wiki.py (a custom version of Gensim's script described [here](https://radimrehurek.com/gensim/scripts/segment_wiki.html))
+8. Import the JSON wikipedia dump into MongoDB
+9. Create an index on the title field:
     ```
-    db.wikidata.createIndex({"labels.<lang>.value": 1})
+    db.wikidata.createIndex({"wikidata_id": 1})
     ```
-5. Download Wikipedia XML dump from [here](https://dumps.wikimedia.org/backup-index.html)
-6. Transform the XML dump to JSON using Gensim's script described [here](https://radimrehurek.com/gensim/scripts/segment_wiki.html)
-7. Import the JSON wikipedia dump into MongoDB
-8. Create an index on the title field:
-    ```
-    db.wikidata.createIndex({"title": 1})
-    ```
-8. Train POS tagger for the desired language using [this](https://github.com/bplank/bilstm-aux), and the data from [universal dependencies](http://universaldependencies.org/)
-9. Run the merging script using:
+10. Train POS tagger for the desired language using [this](https://github.com/bplank/bilstm-aux), and the data from [universal dependencies](http://universaldependencies.org/)
+11. Run the merging script using:
     ```
     ```
-
-ADD THE MAPPING DICTIONARY 
