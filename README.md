@@ -17,7 +17,7 @@ This tool provides a semi-automated creation of the WikiReading dataset as descr
     ```
 4. Create an index on the label of the languages you want to use.
     ```
-    db.wikidata.createIndex({"label.<lang>.value": 1})
+    db.wikidata.createIndex({"labels.<lang>.value": 1})
     ```
 5. Download Wikipedia XML dump from [here](https://dumps.wikimedia.org/backup-index.html)
 6. Transform the XML dump to JSON using Gensim's script described [here](https://radimrehurek.com/gensim/scripts/segment_wiki.html)
@@ -30,3 +30,5 @@ This tool provides a semi-automated creation of the WikiReading dataset as descr
 9. Run the merging script using:
     ```
     ```
+
+ADD THE MAPPING DICTIONARY 

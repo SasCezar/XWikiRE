@@ -11,9 +11,7 @@ from dateutil.parser import *
 from nltk.tokenize.util import align_tokens
 from pymongo import MongoClient
 
-
 import config
-from utils import get_chunks
 
 FACT_DELIMITER_TOKEN = " "
 
@@ -29,31 +27,37 @@ SEPARATOR_TOKENS = {
     "\n\n": 4,
 }
 
-BATCH_DUMP_SIZE = 500
+BATCH_DUMP_SIZE = 10
 
 
-def get_properties_ids(wikidata_doc: Dict) -> Set:
-    return set(wikidata_doc['claims'].keys())
+def get_properties_ids(claims: Dict) -> Set:
+    return set(claims.keys())
 
 
 def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
     clean_docs = []
     for doc in docs:
-        clean_doc = _clean_doc(doc)
-        clean_docs.append(clean_doc)
-
+        try:
+            clean_doc = _clean_doc(doc)
+            clean_docs.append(clean_doc)
+        except:
+            continue
     return clean_docs
 
 
+DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels']
+
+
 def _clean_doc(doc: Dict) -> Dict:
-    del doc['type']
-    del doc['datatype']
-    del doc['descriptions']
-    del doc['claims']
     doc['label_en'] = doc['labels']['en']['value']
     doc['label'] = doc['labels'][config.LANG]['value']
-    del doc['labels']
-    doc['aliases'] = doc['aliases'][config.LANG]
+    doc['aliases'] = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
+
+    for key in DOC_CLEAN_KEYS:
+        try:
+            del doc[key]
+        except:
+            continue
     return doc
 
 
@@ -80,10 +84,10 @@ def get_objects_id(claims: Dict) -> List:
     return list(ids)
 
 
-def documents_to_dict(documents: List[Dict]) -> Dict[Dict]:
+def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
     res = {}
     for doc in documents:
-        res[doc['id']] = _clean_doc(doc)
+        res[doc['id']] = doc
     return res
 
 
@@ -122,7 +126,7 @@ def get_break_levels(article_text, tokens):
         if spans[i - 1][1] == spans[i][0]:
             breaks.append(0)
         else:
-            sep_token = article_text[spans[i - 1][1]:spans[i - 1][1]]
+            sep_token = article_text[spans[i - 1][1]:spans[i][0]]
             if sep_token in SEPARATOR_TOKENS:
                 breaks.append(SEPARATOR_TOKENS[sep_token])
             elif sep_token in string.punctuation:
@@ -175,7 +179,9 @@ def format_text(sections: List) -> str:
     return SECTION_DELIMITER_TOKEN.join(sections)
 
 
-def merge_wikis():
+NO_UNIT = {'label': ''}
+
+def merge_wikis(limit):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
@@ -186,19 +192,20 @@ def merge_wikis():
     prop_cache = {}
 
     processed_docs = []
-    for page in wikipedia.find({"text"}):
+    for page in wikipedia.find({"title": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         try:
-            label = page['title'].lower()
+            label = page['title']
             wikidata_doc = wikidata.find_one({wikidata_id_ref: label}, {"_id": 0})
 
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
-            uncached_prop = clean_wikidata_docs(list(wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})))
+            prop_docs = list(wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0}))
+            uncached_prop = clean_wikidata_docs(prop_docs)
             prop_cache.update(documents_to_dict(uncached_prop))
 
             object_documents_ids = get_objects_id(wikidata_doc['claims'])
             object_documents = wikidata.find({"id": {"$in": object_documents_ids}}, {"_id": 0})
-            documents_dict = documents_to_dict(object_documents)
+            documents_dict = documents_to_dict(clean_wikidata_docs(object_documents))
 
             facts = collections.defaultdict(list)
             clean_props = {}
@@ -214,20 +221,21 @@ def merge_wikis():
                             facts[prop_id].append(fact)
                         elif datatype == "quantity":
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
-                            amount = claim['mainsnak']['datavalue']['value']['amount']
-                            unit = documents_dict[d_id]
+                            amount = claim['mainsnak']['datavalue']['value']['amount'] # TODO Check if +- makes sense
+                            unit = documents_dict[d_id] if d_id in documents_dict else NO_UNIT
                             fact = create_quantity_fact(amount, unit)
                             facts[prop_id].append(fact)
                         elif datatype == "time":
                             d_id = claim['mainsnak']['datavalue']['value']['calendarmodel'].split("/")[-1]
-                            date = claim['mainsnak']['datavalue']['value']['amount']
+                            date = claim['mainsnak']['datavalue']['value']['time']
                             calendar_model = documents_dict[d_id]
                             fact = create_time_fact(date, calendar_model)
                             facts[prop_id].append(fact)
                         else:
                             continue
                     except:
-                        traceback.print_exc()
+                        continue
+                        # traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
             merged_document['text'] = format_text(page['section_texts'])
@@ -244,7 +252,8 @@ def merge_wikis():
                 processed_docs = []
 
         except:
-            traceback.print_exc()
+            continue
+            # traceback.print_exc()
 
     if processed_docs:
         wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
@@ -252,14 +261,28 @@ def merge_wikis():
     return
 
 
+def get_chunks(sequence, chunk_size):
+    """
+    Computes the lower limit and the upper limit of a collection of documents
+    :param sequence:
+    :param chunk_size:
+    :return: The doc id for the lower and upper limits
+    """
+    for j in range(0, len(sequence), chunk_size):
+        chunck = sequence[j:j + chunk_size]
+        lower = chunck[0]['title']
+        upper = chunck[-1]['title']
+        yield (lower, upper)
+
+
 if __name__ == '__main__':
-    chunk_size = 100000
+    chunk_size = 1000
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    documents_id = list(wikipedia.find({}, {"wikibase_item": 1, "_id": 0}).sort("wikibase_item"))
+    documents_id = list(wikipedia.find({}, {"title": 1, "_id": 0}).sort("title"))
     client.close()
-    pool = mp.Pool(processes=config.NUM_WORKERS)
-    pool.map(merge_wikis(), get_chunks(documents_id, chunk_size))
+    pool = mp.Pool(processes=1)
+    pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
     pool.close()
     pool.join()
