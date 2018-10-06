@@ -1,5 +1,6 @@
 import collections
 import datetime
+import re
 import string
 import traceback
 import unicodedata
@@ -15,7 +16,7 @@ import config
 
 FACT_DELIMITER_TOKEN = " "
 
-SECTION_DELIMITER_TOKEN = "\n\n"
+SECTION_DELIMITER_TOKEN = ""
 
 BCE_TOKEN = " BC"
 BC_DATE_FORMAT = '%d %B %Y'
@@ -55,7 +56,7 @@ def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
     return clean_docs
 
 
-DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels']
+DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels', 'sitelinks']
 
 
 def _clean_doc(doc: Dict) -> Dict:
@@ -117,7 +118,9 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
 
 
 def create_wikibase_fact(document: Dict) -> Dict:
-    return document
+    fact = {'value': document['label']}
+    fact.update(document)
+    return fact
 
 
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
@@ -126,8 +129,8 @@ def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     return fact
 
 
-def _parse_bce_date(date: datetime, calendar_model: Dict) -> str:
-    return date.year + BCE_TOKEN
+def _parse_bce_date(date: str, calendar_model: Dict) -> str:
+    return date + BCE_TOKEN
 
 
 def _parse_ce_date(date: datetime, calendar_model: Dict) -> str:
@@ -135,10 +138,12 @@ def _parse_ce_date(date: datetime, calendar_model: Dict) -> str:
 
 
 def create_time_fact(date: str, calendar_model: Dict):
-    parsed_date = parse(date[1:])
+    # TODO Improve extracted information precision
     if date.startswith("-"):
+        parsed_date = date.split("-")[1].lstrip('0')
         fact = {"value": _parse_bce_date(parsed_date, calendar_model)}
     else:
+        parsed_date = parse(date[1:])
         fact = {"value": _parse_ce_date(parsed_date, calendar_model)}
     return fact
 
@@ -194,7 +199,7 @@ def pos_tag_text(merged_document):
 
 
 def extract_features(merged_document: Dict) -> Dict:
-    tokenize(merged_document)
+    # tokenize(merged_document)
     # pos_tags = pos_tag_text(merged_document['string_sequence'])
     # merged_document['pos_tags'] = pos_tags
     return merged_document
@@ -206,6 +211,17 @@ def format_text(sections: List) -> str:
 
 NO_UNIT = {'label': ''}
 
+FILE_RE = re.compile(
+    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
+    re.IGNORECASE)
+
+
+def create_string_fact(value):
+    if not FILE_RE.findall(value):
+        return {'value': value}
+    else:
+        return {}
+
 
 def merge_wikis(limit):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
@@ -214,14 +230,12 @@ def merge_wikis(limit):
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
 
-    wikidata_id_ref = "labels.{}.value".format(config.LANG)
     prop_cache = {}
 
     processed_docs = []
-    for page in wikipedia.find({"title": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+    for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         try:
-            label = page['title']
-            wikidata_doc = wikidata.find_one({wikidata_id_ref: label}, {"_id": 0})
+            wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
@@ -240,7 +254,11 @@ def merge_wikis(limit):
                 for claim in wikidata_doc['claims'][prop_id]:
                     try:
                         datatype = claim['mainsnak']['datavalue']['type']
-                        if datatype == "wikibase-entityid":
+                        if datatype == "string":
+                            value = claim['mainsnak']['datavalue']['value']
+                            fact = create_string_fact(value)
+                            facts[prop_id].append(fact) if fact else None
+                        elif datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
                             document = documents_dict[d_id]
                             fact = create_wikibase_fact(document)
@@ -260,12 +278,11 @@ def merge_wikis(limit):
                         else:
                             continue
                     except:
-                        continue
-                        # traceback.print_exc()
+                        traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
             merged_document['text'] = format_text(page['section_texts'])
-            merged_document['properties'] = clean_props
+            merged_document['properties'] = clean_props  # TODO Keep only prop that have a fact
             merged_document['facts'] = facts
 
             document_features = extract_features(merged_document)
@@ -278,8 +295,7 @@ def merge_wikis(limit):
                 processed_docs = []
 
         except:
-            continue
-            # traceback.print_exc()
+            traceback.print_exc()
 
     if processed_docs:
         wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
@@ -296,8 +312,8 @@ def get_chunks(sequence, chunk_size):
     """
     for j in range(0, len(sequence), chunk_size):
         chunck = sequence[j:j + chunk_size]
-        lower = chunck[0]['title']
-        upper = chunck[-1]['title']
+        lower = chunck[0]['wikidata_id']
+        upper = chunck[-1]['wikidata_id']
         yield (lower, upper)
 
 
@@ -306,9 +322,11 @@ if __name__ == '__main__':
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    documents_id = list(wikipedia.find({}, {"title": 1, "_id": 0}).sort("title"))
-    client.close()
-    pool = mp.Pool(processes=1)
-    pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-    pool.close()
-    pool.join()
+    documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
+    for limit in get_chunks(documents_id, chunk_size):
+        merge_wikis(limit)
+    # client.close()
+    # pool = mp.Pool(processes=1)
+    # pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
+    # pool.close()
+    # pool.join()
