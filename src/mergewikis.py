@@ -1,6 +1,7 @@
 import collections
 import datetime
 import re
+import spacy
 import string
 import traceback
 import unicodedata
@@ -21,12 +22,14 @@ SECTION_DELIMITER_TOKEN = ""
 BCE_TOKEN = " BC"
 BC_DATE_FORMAT = '%d %B %Y'
 
-SEPARATOR_TOKENS = {
+BREAK_LEVEL_TOKENS = {
     " ": 1,
     "\n": 2,
     "SENTENCE_SEPARATOR": 3,
     "\n\n": 4,
 }
+
+SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
 
 BATCH_DUMP_SIZE = 10
 
@@ -157,17 +160,17 @@ def get_break_levels(article_text, tokens):
             breaks.append(0)
         else:
             sep_token = article_text[spans[i - 1][1]:spans[i][0]]
-            if sep_token in SEPARATOR_TOKENS:
-                breaks.append(SEPARATOR_TOKENS[sep_token])
+            if sep_token in BREAK_LEVEL_TOKENS:
+                breaks.append(BREAK_LEVEL_TOKENS[sep_token])
             elif sep_token in string.punctuation:
-                breaks.append(SEPARATOR_TOKENS["SENTENCE_SEPARATOR"])
-            elif len(sep_token) == 1 and unicodedata.category(sep_token).startswith("P"):
-                breaks.append(SEPARATOR_TOKENS["SENTENCE_SEPARATOR"])
+                breaks.append(BREAK_LEVEL_TOKENS["SENTENCE_SEPARATOR"])
+            elif len(sep_token) == 1 and unicodedata.category(sep_token).startswith("P"): # TODO Check if "word, word" becames "[0, 3, 1]"
+                breaks.append(BREAK_LEVEL_TOKENS["SENTENCE_SEPARATOR"])
             else:
                 for token in sep_token:
-                    if token in SEPARATOR_TOKENS:
+                    if token in BREAK_LEVEL_TOKENS:
                         try:
-                            breaks.append(SEPARATOR_TOKENS[token])
+                            breaks.append(BREAK_LEVEL_TOKENS[token])
                         except:
                             breaks.append(0)
                             traceback.print_exc()
@@ -175,15 +178,45 @@ def get_break_levels(article_text, tokens):
     return breaks
 
 
+def get_tokens(doc):
+    tokenized_text = []
+    for token in doc:
+        tokenized_text.append(token.text)
+        if token.whitespace_:  # filter out empty strings
+            tokenized_text.append(token.whitespace_)
+    return tokenized_text
+
+
+nlp = spacy.load(config.LANG, disable=['parser', 'ner', 'textcat', 'tagger'])
+nlp.max_length = 300000
+
+
 def tokenizer(text):
-    return nltk.word_tokenize(text, config.EXT_LANG)
+    doc = nlp(text)
+    tokens = get_tokens(doc)
+    return tokens
+
+
+def extract_break_levels(tokens):
+    breaks = [0]
+    tokens_iter = enumerate(tokens)
+    for i, token in tokens_iter:
+        if token in BREAK_LEVEL_TOKENS:
+            breaks.append(BREAK_LEVEL_TOKENS[token])
+        elif token in SENTENCE_BREAKS:
+            breaks.append(BREAK_LEVEL_TOKENS['SENTENCE_SEPARATOR'])
+        else:
+            breaks.append(0)
+    return breaks
+
 
 
 def tokenize(merged_document):
     article_text = merged_document['text']
     tokens = tokenizer(article_text)
     merged_document['string_sequence'] = tokens
-    break_levels = get_break_levels(article_text, tokens)
+    # break_levels = get_break_levels(article_text, tokens)
+    break_levels = extract_break_levels(tokens)
     merged_document['break_levels'] = break_levels
 
     for property in merged_document['properties']:
@@ -199,7 +232,7 @@ def pos_tag_text(merged_document):
 
 
 def extract_features(merged_document: Dict) -> Dict:
-    # tokenize(merged_document)
+    tokenize(merged_document)
     # pos_tags = pos_tag_text(merged_document['string_sequence'])
     # merged_document['pos_tags'] = pos_tags
     return merged_document

@@ -141,7 +141,9 @@ def segment_and_write_all_articles(file_path, output_file, min_article_character
                     output_data['wikidata_id'] = wikidata_mapping_dict[article_id]
                 except:
                     skipped += 1
-                    logging.info("Article with WikipediaID: {}, and title: \'{}\', was not found".format(output_data['id'], output_data['title']))
+                    logging.info(
+                        "Article with WikipediaID: {}, and title: \'{}\', was not found".format(output_data['id'],
+                                                                                                output_data['title']))
                     continue
 
             for section_heading, section_content in article_sections:
@@ -188,7 +190,19 @@ def extract_page_xmls(f):
             elem.clear()
 
 
-def segment(page_xml, include_interlinks=False):
+WIKITABLE_REGEX = re.compile(r"{\|.*class=&quot;wikitable&quot;[^}]*\|}")
+WIKIIMAGE_REGEX = re.compile(r"(\[\[[^:|\[]+:[^\.]+\.(\w+)\|.+\]\])")
+WIKIIMAGES_REGEX = re.compile(r"{{images \|.*}}")
+
+XML_CLEAN_REGEXPS = [WIKITABLE_REGEX, WIKIIMAGE_REGEX, WIKIIMAGES_REGEX]
+
+
+def clean_xml_page(page_xml):
+    for clean_re in XML_CLEAN_REGEXPS:
+        page_xml = clean_re.sub(" ", page_xml)
+
+
+def segment(page_xml, include_interlinks=False, clean=True):
     """Parse the content inside a page tag
     Parameters
     ----------
@@ -201,6 +215,8 @@ def segment(page_xml, include_interlinks=False):
     (str, list of (str, str), (Optionally) dict of (str: str))
         Structure contains (title, [(section_heading, section_content), ...], (Optionally) {interlinks}).
     """
+    if clean:
+        page_xml = clean_xml_page(page_xml)
     elem = cElementTree.fromstring(page_xml)
     filter_namespaces = ('0',)
     namespace = get_namespace(elem.tag)
