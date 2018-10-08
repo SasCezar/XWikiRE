@@ -1,16 +1,9 @@
 import collections
-import datetime
-import re
-import spacy
-import string
-import traceback
-import unicodedata
 import multiprocessing as mp
+import re
+import traceback
 from typing import List, Dict, Set
 
-import nltk
-from dateutil.parser import *
-from nltk.tokenize.util import align_tokens
 from pymongo import MongoClient
 
 import config
@@ -32,6 +25,7 @@ BREAK_LEVEL_TOKENS = {
 SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
 
 BATCH_DUMP_SIZE = 500
+tokenizer = config.TOKENIZER
 
 
 def get_properties_ids(claims: Dict) -> Set:
@@ -68,7 +62,6 @@ def _clean_doc(doc: Dict) -> Dict:
     :param doc:
     :return:
     """
-    # doc['label_en'] = doc['labels']['en']['value']
     doc['label'] = doc['labels'][config.LANG]['value']
     doc['aliases'] = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
 
@@ -96,9 +89,6 @@ def get_objects_id(claims: Dict) -> List:
                     ids.add(d_id)
                 elif datatype == "quantity":
                     d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
-                    ids.add(d_id)
-                elif datatype == "time":
-                    d_id = claim['mainsnak']['datavalue']['value']['calendarmodel'].split("/")[-1]
                     ids.add(d_id)
                 else:
                     continue
@@ -132,69 +122,9 @@ def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     return fact
 
 
-def _parse_bce_date(date: str, calendar_model: Dict) -> str:
-    return date + BCE_TOKEN
-
-
-def _parse_ce_date(date: datetime, calendar_model: Dict) -> str:
-    return date.strftime(BC_DATE_FORMAT)
-
-
-def create_time_fact(date: str, calendar_model: Dict):
-    # TODO Improve extracted information precision
-    if date.startswith("-"):
-        parsed_date = date.split("-")[1].lstrip('0')
-        fact = {"value": _parse_bce_date(parsed_date, calendar_model)}
-    else:
-        parsed_date = parse(date[1:])
-        fact = {"value": _parse_ce_date(parsed_date, calendar_model)}
+def create_time_fact(date: str):
+    fact = {"value": date}
     return fact
-
-
-def get_break_levels(article_text, tokens):
-    spans = align_tokens(tokens, article_text)
-
-    breaks = [0]
-    for i in range(1, len(spans)):
-        if spans[i - 1][1] == spans[i][0]:
-            breaks.append(0)
-        else:
-            sep_token = article_text[spans[i - 1][1]:spans[i][0]]
-            if sep_token in BREAK_LEVEL_TOKENS:
-                breaks.append(BREAK_LEVEL_TOKENS[sep_token])
-            elif sep_token in string.punctuation:
-                breaks.append(BREAK_LEVEL_TOKENS["SENTENCE_SEPARATOR"])
-            elif len(sep_token) == 1 and unicodedata.category(sep_token).startswith("P"):  # TODO Check if "word, word" becames "[0, 3, 1]"
-                breaks.append(BREAK_LEVEL_TOKENS["SENTENCE_SEPARATOR"])
-            else:
-                for token in sep_token:
-                    if token in BREAK_LEVEL_TOKENS:
-                        try:
-                            breaks.append(BREAK_LEVEL_TOKENS[token])
-                        except:
-                            breaks.append(0)
-                            traceback.print_exc()
-
-    return breaks
-
-
-def get_tokens(doc):
-    tokenized_text = []
-    for token in doc:
-        tokenized_text.append(token.text)
-        if token.whitespace_:  # filter out empty strings
-            tokenized_text.append(token.whitespace_)
-    return tokenized_text
-
-
-nlp = spacy.load(config.LANG, disable=['parser', 'ner', 'textcat', 'tagger'])
-nlp.max_length = 300000
-
-
-def tokenizer(text):
-    doc = nlp(text)
-    tokens = get_tokens(doc)
-    return tokens
 
 
 def extract_break_levels(tokens):
@@ -212,35 +142,37 @@ def extract_break_levels(tokens):
 
 def tokenize(merged_document):
     article_text = merged_document['text']
-    tokens = tokenizer(article_text)
+    tokens = tokenizer.tokenize(article_text)
     merged_document['string_sequence'] = tokens
-    # break_levels = get_break_levels(article_text, tokens)
     break_levels = extract_break_levels(tokens)
     merged_document['break_levels'] = break_levels
 
-    """
     for property in merged_document['properties']:
-        merged_document['properties'][property]['label'] = tokenizer(merged_document['properties'][property]['label'])
+        merged_document['properties'][property]['label'] = tokenizer.tokenize(
+            merged_document['properties'][property]['label'])
 
     for prop in merged_document['facts']:
         for fact in merged_document['facts'][prop]:
-            fact['value_sequence'] = tokenizer(fact['value'])
-    """
-
-
-def pos_tag_text(merged_document):
-    pass
+            fact['value_sequence'] = tokenizer.tokenize(fact['value'])
 
 
 def extract_features(merged_document: Dict) -> Dict:
     tokenize(merged_document)
-    # pos_tags = pos_tag_text(merged_document['string_sequence'])
+    # pos_tags = pos_tagger.tag(merged_document['string_sequence'])
     # merged_document['pos_tags'] = pos_tags
     return merged_document
 
 
-def format_text(sections: List) -> str:
-    return SECTION_DELIMITER_TOKEN.join(sections)
+STOP_SECTIONS = {
+    'en': ['See also', 'Notes', 'Further reading', 'External links'],
+    'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
+    'it': []
+}
+
+
+def format_text(sections: List, section_titles: List) -> str:
+    result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
+    return result
 
 
 NO_UNIT = {'label': ''}
@@ -264,6 +196,7 @@ def merge_wikis(limit):
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
 
+    date_formatter = config.DATE_FORMATTER
     prop_cache = {}
 
     processed_docs = []
@@ -273,7 +206,7 @@ def merge_wikis(limit):
 
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
-            prop_docs = list(wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0}))
+            prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
             uncached_prop = clean_wikidata_docs(prop_docs)
             prop_cache.update(documents_to_dict(uncached_prop))
 
@@ -288,27 +221,27 @@ def merge_wikis(limit):
                 for claim in wikidata_doc['claims'][prop_id]:
                     try:
                         datatype = claim['mainsnak']['datavalue']['type']
-                        if datatype == "string":
+                        if datatype == "string":  # TODO Check better if are worth using
                             value = claim['mainsnak']['datavalue']['value']
                             fact = create_string_fact(value)
                             facts[prop_id].append(fact) if fact else None
                         elif datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
-                            document = documents_dict[d_id]
-                            fact = create_wikibase_fact(document)
-                            facts[prop_id].append(fact)
-                        elif datatype == "quantity":
+                            if d_id in documents_dict:
+                                document = documents_dict[d_id]
+                                fact = create_wikibase_fact(document)
+                                facts[prop_id].append(fact)
+                        elif datatype == "quantity":  # TODO Ask Anders if he wants to keep them
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
                             amount = claim['mainsnak']['datavalue']['value']['amount']  # TODO Check if +- makes sense
                             unit = documents_dict[d_id] if d_id in documents_dict else NO_UNIT
                             fact = create_quantity_fact(amount, unit)
                             facts[prop_id].append(fact)
                         elif datatype == "time":
-                            d_id = claim['mainsnak']['datavalue']['value']['calendarmodel'].split("/")[-1]
                             date = claim['mainsnak']['datavalue']['value']['time']
                             precision = claim['mainsnak']['datavalue']['value']['precision']
-                            calendar_model = documents_dict[d_id]
-                            fact = create_time_fact(date, calendar_model)
+                            formatted_date = date_formatter.format(date, precision)
+                            fact = create_time_fact(formatted_date)
                             facts[prop_id].append(fact)
                         else:
                             continue
@@ -316,7 +249,7 @@ def merge_wikis(limit):
                         traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
-            merged_document['text'] = format_text(page['section_texts'])
+            merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
             merged_document['properties'] = clean_props  # TODO Keep only prop that have a fact
             merged_document['facts'] = facts
 
