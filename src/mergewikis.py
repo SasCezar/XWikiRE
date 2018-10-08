@@ -31,7 +31,7 @@ BREAK_LEVEL_TOKENS = {
 
 SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
 
-BATCH_DUMP_SIZE = 10
+BATCH_DUMP_SIZE = 500
 
 
 def get_properties_ids(claims: Dict) -> Set:
@@ -164,7 +164,7 @@ def get_break_levels(article_text, tokens):
                 breaks.append(BREAK_LEVEL_TOKENS[sep_token])
             elif sep_token in string.punctuation:
                 breaks.append(BREAK_LEVEL_TOKENS["SENTENCE_SEPARATOR"])
-            elif len(sep_token) == 1 and unicodedata.category(sep_token).startswith("P"): # TODO Check if "word, word" becames "[0, 3, 1]"
+            elif len(sep_token) == 1 and unicodedata.category(sep_token).startswith("P"):  # TODO Check if "word, word" becames "[0, 3, 1]"
                 breaks.append(BREAK_LEVEL_TOKENS["SENTENCE_SEPARATOR"])
             else:
                 for token in sep_token:
@@ -210,7 +210,6 @@ def extract_break_levels(tokens):
     return breaks
 
 
-
 def tokenize(merged_document):
     article_text = merged_document['text']
     tokens = tokenizer(article_text)
@@ -219,12 +218,14 @@ def tokenize(merged_document):
     break_levels = extract_break_levels(tokens)
     merged_document['break_levels'] = break_levels
 
+    """
     for property in merged_document['properties']:
         merged_document['properties'][property]['label'] = tokenizer(merged_document['properties'][property]['label'])
 
     for prop in merged_document['facts']:
         for fact in merged_document['facts'][prop]:
             fact['value_sequence'] = tokenizer(fact['value'])
+    """
 
 
 def pos_tag_text(merged_document):
@@ -305,6 +306,7 @@ def merge_wikis(limit):
                         elif datatype == "time":
                             d_id = claim['mainsnak']['datavalue']['value']['calendarmodel'].split("/")[-1]
                             date = claim['mainsnak']['datavalue']['value']['time']
+                            precision = claim['mainsnak']['datavalue']['value']['precision']
                             calendar_model = documents_dict[d_id]
                             fact = create_time_fact(date, calendar_model)
                             facts[prop_id].append(fact)
@@ -351,15 +353,15 @@ def get_chunks(sequence, chunk_size):
 
 
 if __name__ == '__main__':
-    chunk_size = 1000
+    chunk_size = 5000
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
-    for limit in get_chunks(documents_id, chunk_size):
-        merge_wikis(limit)
-    # client.close()
-    # pool = mp.Pool(processes=1)
-    # pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-    # pool.close()
-    # pool.join()
+    # for limit in get_chunks(documents_id, chunk_size):
+    #   merge_wikis(limit)
+    client.close()
+    pool = mp.Pool(processes=6)
+    pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
+    pool.close()
+    pool.join()
