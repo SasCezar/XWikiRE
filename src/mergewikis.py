@@ -8,13 +8,6 @@ from pymongo import MongoClient
 
 import config
 
-FACT_DELIMITER_TOKEN = " "
-
-SECTION_DELIMITER_TOKEN = ""
-
-BCE_TOKEN = " BC"
-BC_DATE_FORMAT = '%d %B %Y'
-
 BREAK_LEVEL_TOKENS = {
     " ": 1,
     "\n": 2,
@@ -24,7 +17,19 @@ BREAK_LEVEL_TOKENS = {
 
 SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
 
-BATCH_DUMP_SIZE = 500
+STOP_SECTIONS = {
+    'en': ['See also', 'Notes', 'Further reading', 'External links'],
+    'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
+    'it': []
+}
+
+NO_UNIT = {'label': ''}
+
+FILE_RE = re.compile(
+    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
+    re.IGNORECASE)
+
+BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
 
@@ -110,20 +115,28 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
     return res
 
 
+def create_string_fact(value):
+    if not FILE_RE.findall(value):
+        return {'value': value, "value_sequence": tokenizer.tokenize(value, False)}
+    else:
+        return {}
+
+
 def create_wikibase_fact(document: Dict) -> Dict:
-    fact = {'value': document['label']}
+    fact = {'value': document['label'], "value_sequence": tokenizer.tokenize(document['label'], False)}
     fact.update(document)
     return fact
 
 
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
-    fact = {"value": amount + FACT_DELIMITER_TOKEN + unit['label']}
+    value = amount + " " + unit['label']
+    fact = {"value": value.strip(), 'value_sequence': value.split()}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    fact = {"value": date}
+    fact = {"value": date, 'value_sequence': date.split()}
     return fact
 
 
@@ -147,13 +160,9 @@ def tokenize(merged_document):
     break_levels = extract_break_levels(tokens)
     merged_document['break_levels'] = break_levels
 
-    for property in merged_document['properties']:
-        merged_document['properties'][property]['label'] = tokenizer.tokenize(
-            merged_document['properties'][property]['label'])
-
-    for prop in merged_document['facts']:
-        for fact in merged_document['facts'][prop]:
-            fact['value_sequence'] = tokenizer.tokenize(fact['value'])
+    for prop in merged_document['properties']:
+        merged_document['properties'][prop]['label'] = tokenizer.tokenize(
+            merged_document['properties'][prop]['label'])
 
 
 def extract_features(merged_document: Dict) -> Dict:
@@ -163,30 +172,9 @@ def extract_features(merged_document: Dict) -> Dict:
     return merged_document
 
 
-STOP_SECTIONS = {
-    'en': ['See also', 'Notes', 'Further reading', 'External links'],
-    'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
-    'it': []
-}
-
-
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
     return result
-
-
-NO_UNIT = {'label': ''}
-
-FILE_RE = re.compile(
-    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
-    re.IGNORECASE)
-
-
-def create_string_fact(value):
-    if not FILE_RE.findall(value):
-        return {'value': value}
-    else:
-        return {}
 
 
 def merge_wikis(limit):
@@ -215,9 +203,7 @@ def merge_wikis(limit):
             documents_dict = documents_to_dict(clean_wikidata_docs(object_documents))
 
             facts = collections.defaultdict(list)
-            clean_props = {}
             for prop_id in wikidata_doc['claims']:
-                clean_props[prop_id] = prop_cache[prop_id]
                 for claim in wikidata_doc['claims'][prop_id]:
                     try:
                         datatype = claim['mainsnak']['datavalue']['type']
@@ -233,7 +219,8 @@ def merge_wikis(limit):
                                 facts[prop_id].append(fact)
                         elif datatype == "quantity":  # TODO Ask Anders if he wants to keep them
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
-                            amount = claim['mainsnak']['datavalue']['value']['amount']  # TODO Check if +- makes sense
+                            # TODO Check if + makes sense, - makes!
+                            amount = claim['mainsnak']['datavalue']['value']['amount']
                             unit = documents_dict[d_id] if d_id in documents_dict else NO_UNIT
                             fact = create_quantity_fact(amount, unit)
                             facts[prop_id].append(fact)
@@ -250,7 +237,7 @@ def merge_wikis(limit):
 
             merged_document = _clean_doc(wikidata_doc)
             merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
-            merged_document['properties'] = clean_props  # TODO Keep only prop that have a fact
+            merged_document['properties'] = {pid: prop_cache[pid] for pid in facts}
             merged_document['facts'] = facts
 
             document_features = extract_features(merged_document)
@@ -258,7 +245,7 @@ def merge_wikis(limit):
 
             processed_docs.append(merged_document)
 
-            if len(processed_docs) >= BATCH_DUMP_SIZE:
+            if len(processed_docs) >= BATCH_WRITE_SIZE:
                 wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
                 processed_docs = []
 
@@ -291,9 +278,9 @@ if __name__ == '__main__':
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
+    client.close()
     # for limit in get_chunks(documents_id, chunk_size):
     #   merge_wikis(limit)
-    client.close()
     pool = mp.Pool(processes=6)
     pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
     pool.close()
