@@ -129,14 +129,15 @@ def create_wikibase_fact(document: Dict) -> Dict:
 
 
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
+    amount = amount[1:] if amount.startswith("-") else amount
     value = amount + " " + unit['label']
-    fact = {"value": value.strip(), 'value_sequence': value.split()}
+    fact = {"value": value.strip(), 'value_sequence': tokenizer.tokenize(value, False)}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    fact = {"value": date, 'value_sequence': date.split()}
+    fact = {"value": date, 'value_sequence': tokenizer.tokenize(date, False)}
     return fact
 
 
@@ -160,9 +161,9 @@ def tokenize(merged_document):
     break_levels = extract_break_levels(tokens)
     merged_document['break_levels'] = break_levels
 
-    for prop in merged_document['properties']:
-        merged_document['properties'][prop]['label'] = tokenizer.tokenize(
-            merged_document['properties'][prop]['label'])
+    # for prop in merged_document['properties']:
+    #    merged_document['properties'][prop]['label'] = tokenizer.tokenize(
+    #        merged_document['properties'][prop]['label'])
 
 
 def extract_features(merged_document: Dict) -> Dict:
@@ -174,7 +175,7 @@ def extract_features(merged_document: Dict) -> Dict:
 
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    return result
+    return result.strip()
 
 
 def merge_wikis(limit):
@@ -207,19 +208,14 @@ def merge_wikis(limit):
                 for claim in wikidata_doc['claims'][prop_id]:
                     try:
                         datatype = claim['mainsnak']['datavalue']['type']
-                        if datatype == "string":  # TODO Check better if are worth using
-                            value = claim['mainsnak']['datavalue']['value']
-                            fact = create_string_fact(value)
-                            facts[prop_id].append(fact) if fact else None
-                        elif datatype == "wikibase-entityid":
+                        if datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
                             if d_id in documents_dict:
                                 document = documents_dict[d_id]
                                 fact = create_wikibase_fact(document)
                                 facts[prop_id].append(fact)
-                        elif datatype == "quantity":  # TODO Ask Anders if he wants to keep them
+                        elif datatype == "quantity":
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
-                            # TODO Check if + makes sense, - makes!
                             amount = claim['mainsnak']['datavalue']['value']['amount']
                             unit = documents_dict[d_id] if d_id in documents_dict else NO_UNIT
                             fact = create_quantity_fact(amount, unit)
@@ -237,7 +233,7 @@ def merge_wikis(limit):
 
             merged_document = _clean_doc(wikidata_doc)
             merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
-            merged_document['properties'] = {pid: prop_cache[pid] for pid in facts}
+            merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
             document_features = extract_features(merged_document)
