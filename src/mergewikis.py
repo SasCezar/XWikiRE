@@ -8,15 +8,6 @@ from pymongo import MongoClient
 
 import config
 
-BREAK_LEVEL_TOKENS = {
-    " ": 1,
-    "\n": 2,
-    "SENTENCE_SEPARATOR": 3,
-    "\n\n": 4,
-}
-
-SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
-
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
     'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
@@ -115,15 +106,9 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
     return res
 
 
-def create_string_fact(value):
-    if not FILE_RE.findall(value):
-        return {'value': value, "value_sequence": tokenizer.tokenize(value, False)}
-    else:
-        return {}
-
-
 def create_wikibase_fact(document: Dict) -> Dict:
-    fact = {'value': document['label'], "value_sequence": tokenizer.tokenize(document['label'], False)}
+    tokens, _, _ = tokenizer.tokenize(document['label'])
+    fact = {'value': document['label'], "value_sequence": tokens}
     fact.update(document)
     return fact
 
@@ -131,39 +116,27 @@ def create_wikibase_fact(document: Dict) -> Dict:
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("-") else amount
     value = amount + " " + unit['label']
-    fact = {"value": value.strip(), 'value_sequence': tokenizer.tokenize(value, False)}
+    tokens, _, _ = tokenizer.tokenize(value)
+    fact = {"value": value.strip(), 'value_sequence': tokens}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    fact = {"value": date, 'value_sequence': tokenizer.tokenize(date, False)}
+    tokens, _, _ = tokenizer.tokenize(date)
+    fact = {"value": date, 'value_sequence': tokens}
     return fact
-
-
-def extract_break_levels(tokens):
-    breaks = [0]
-    tokens_iter = enumerate(tokens)
-    for i, token in tokens_iter:
-        if token in BREAK_LEVEL_TOKENS:
-            breaks.append(BREAK_LEVEL_TOKENS[token])
-        elif token in SENTENCE_BREAKS:
-            breaks.append(BREAK_LEVEL_TOKENS['SENTENCE_SEPARATOR'])
-        else:
-            breaks.append(0)
-    return breaks
 
 
 def tokenize(merged_document):
     article_text = merged_document['text']
-    tokens = tokenizer.tokenize(article_text)
+    tokens, _, break_levels = tokenizer.tokenize(article_text)
     merged_document['string_sequence'] = tokens
-    break_levels = extract_break_levels(tokens)
     merged_document['break_levels'] = break_levels
 
-    # for prop in merged_document['properties']:
-    #    merged_document['properties'][prop]['label'] = tokenizer.tokenize(
-    #        merged_document['properties'][prop]['label'])
+    for prop in merged_document['properties']:
+        tokens, _ = tokenizer.tokenize(merged_document['properties'][prop]['label'])
+        merged_document['properties'][prop]['label'] = tokens
 
 
 def extract_features(merged_document: Dict) -> Dict:
