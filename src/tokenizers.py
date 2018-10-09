@@ -37,10 +37,10 @@ class SpacyTokenizer(TokenizerI):
         super().__init__()
         self._tokenizer = spacy.load(lang, **kwargs)
 
-    def tokenize(self, text: str) -> Tuple[List[str], List[str], List[int]]:
+    def tokenize(self, text: str) -> Tuple[List[str], List[int]]:
         doc = self._tokenizer(text)
-        tokens, tokens_w_sep, break_levels = self._decompose(doc)
-        return tokens, tokens_w_sep, break_levels
+        tokens, break_levels = self._decompose(doc)
+        return tokens, break_levels
 
     def _decompose(self, doc):
         tokenized_text = []
@@ -54,4 +54,4 @@ class SpacyTokenizer(TokenizerI):
                 token_separators.append(self.BREAK_LEVEL_TOKENS[token.whitespace_])
             else:
                 token_separators.append(0)
-        return filtered_tokens, tokenized_text, token_separators
+        return filtered_tokens, token_separators

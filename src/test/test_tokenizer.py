@@ -24,6 +24,6 @@ class TestSpacyTokenizer(unittest.TestCase):
     def test_millennium(self):
         tokenizer = SpacyTokenizer('en')
         text = """This is a \n\n test! Let's see if it\nwords. Maybe not? Maybe yes!"""
-        tokens, _, break_levels = tokenizer.tokenize(text)
+        tokens, break_levels = tokenizer.tokenize(text)
         rebuilt_text = _rebuild(break_levels, tokens)
         self.assertEquals(text, rebuilt_text)

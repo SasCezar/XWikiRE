@@ -116,21 +116,21 @@ def create_wikibase_fact(document: Dict) -> Dict:
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("-") else amount
     value = amount + " " + unit['label']
-    tokens, _, _ = tokenizer.tokenize(value)
+    tokens, _ = tokenizer.tokenize(value)
     fact = {"value": value.strip(), 'value_sequence': tokens}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    tokens, _, _ = tokenizer.tokenize(date)
+    tokens, _ = tokenizer.tokenize(date)
     fact = {"value": date, 'value_sequence': tokens}
     return fact
 
 
 def tokenize(merged_document):
     article_text = merged_document['text']
-    tokens, _, break_levels = tokenizer.tokenize(article_text)
+    tokens, break_levels = tokenizer.tokenize(article_text)
     merged_document['string_sequence'] = tokens
     merged_document['break_levels'] = break_levels
 
