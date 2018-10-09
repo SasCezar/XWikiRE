@@ -107,7 +107,7 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
 
 
 def create_wikibase_fact(document: Dict) -> Dict:
-    tokens, _, _, _ = tokenizer.tokenize(document['label'])
+    tokens, _, _, = tokenizer.tokenize(document['label'])
     fact = {'value': document['label'], "value_sequence": tokens}
     fact.update(document)
     return fact
@@ -133,11 +133,11 @@ def tokenize(merged_document):
     tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
     merged_document['string_sequence'] = tokens
     merged_document['break_levels'] = break_levels
-    merged_document['pos_taggger_sequence'] = break_levels
+    merged_document['pos_tagger_sequence'] = pos_tagger_tokens
 
     for prop in merged_document['properties']:
         tokens, _, _ = tokenizer.tokenize(merged_document['properties'][prop]['label'])
-        merged_document['properties'][prop]['label'] = tokens
+        merged_document['properties'][prop]['label_sequence'] = tokens
 
 
 def extract_features(merged_document: Dict) -> Dict:
@@ -149,6 +149,8 @@ def extract_features(merged_document: Dict) -> Dict:
 
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
+    result = re.sub("===[^=]+===", "", result)
+    result = re.sub("\n{3,}", "\n\n", result)
     return result.strip()
 
 
