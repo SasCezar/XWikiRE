@@ -39,19 +39,23 @@ class SpacyTokenizer(TokenizerI):
 
     def tokenize(self, text: str) -> Tuple[List[str], List[int]]:
         doc = self._tokenizer(text)
-        tokens, break_levels = self._decompose(doc)
+        tokens, break_levels, pos_tagger_seq = self._decompose(doc)
         return tokens, break_levels
 
     def _decompose(self, doc):
         tokenized_text = []
         filtered_tokens = []
+        pos_tagger_seq = []
         token_separators = [0]
         for token in doc:
             tokenized_text.append(token.text) if token.text not in self.BREAK_LEVEL_TOKENS else None
+            pos_tagger_seq.append(token.text) if token.text not in self.BREAK_LEVEL_TOKENS else None
+            if token.text in self.SENTENCE_BREAKS:
+                pos_tagger_seq.append("\n")
             filtered_tokens.append(token.text)
             if token.whitespace_:  # filter out empty strings
                 tokenized_text.append(token.whitespace_)
                 token_separators.append(self.BREAK_LEVEL_TOKENS[token.whitespace_])
             else:
                 token_separators.append(0)
-        return filtered_tokens, token_separators
+        return filtered_tokens, token_separators, pos_tagger_seq

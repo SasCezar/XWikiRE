@@ -107,7 +107,7 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
 
 
 def create_wikibase_fact(document: Dict) -> Dict:
-    tokens, _, _ = tokenizer.tokenize(document['label'])
+    tokens, _, _, _ = tokenizer.tokenize(document['label'])
     fact = {'value': document['label'], "value_sequence": tokens}
     fact.update(document)
     return fact
@@ -116,26 +116,27 @@ def create_wikibase_fact(document: Dict) -> Dict:
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("-") else amount
     value = amount + " " + unit['label']
-    tokens, _ = tokenizer.tokenize(value)
+    tokens, _, _ = tokenizer.tokenize(value)
     fact = {"value": value.strip(), 'value_sequence': tokens}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    tokens, _ = tokenizer.tokenize(date)
+    tokens, _, _ = tokenizer.tokenize(date)
     fact = {"value": date, 'value_sequence': tokens}
     return fact
 
 
 def tokenize(merged_document):
     article_text = merged_document['text']
-    tokens, break_levels = tokenizer.tokenize(article_text)
+    tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
     merged_document['string_sequence'] = tokens
     merged_document['break_levels'] = break_levels
+    merged_document['pos_taggger_sequence'] = break_levels
 
     for prop in merged_document['properties']:
-        tokens, _ = tokenizer.tokenize(merged_document['properties'][prop]['label'])
+        tokens, _, _ = tokenizer.tokenize(merged_document['properties'][prop]['label'])
         merged_document['properties'][prop]['label'] = tokens
 
 
