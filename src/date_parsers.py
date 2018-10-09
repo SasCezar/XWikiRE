@@ -1,3 +1,4 @@
+import datetime
 from abc import ABC
 
 import numeral
@@ -23,6 +24,7 @@ CENTURY_TOKEN = {
 
 class DateFormatter(ABC):
     def __init__(self, lang='en', out_locale="en-US"):
+        self._default_datetime = datetime.datetime(1, 1, 1)
         self._precisions = {
             6: self._parse_millennium,
             7: self._parse_century,
@@ -66,7 +68,7 @@ class DateFormatter(ABC):
         return self._year_template.format(year=year, era=era).strip()
 
     def _parse_month(self, date, era=""):
-        date = parse(date)
+        date = parse(date, default=self._default_datetime)
         formatted = date.strftime(self._month_template) + " " + era
         return formatted.strip()
 

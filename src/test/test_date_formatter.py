@@ -60,25 +60,25 @@ class TestFormatterMethods(unittest.TestCase):
 
     def test_month_french(self):
         formatter = DateFormatter(out_locale='fr-FR')
-        precision = 11
+        precision = 10
 
-        date = "+00000001920-01-01T00:00:00Z"
+        date = "+00000001920-01-02T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "1 janvier 1920")
-        date = "-000000020-01-01T00:00:00Z"
+        self.assertEquals(formatted, "janvier 1920")
+        date = "-000000020-01-10T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "1 janvier 20 BC")
+        self.assertEquals(formatted, "janvier 20 BC")
 
     def test_month_italian(self):
         formatter = DateFormatter(out_locale='it-IT')
-        precision = 11
+        precision = 10
 
         date = "+00000001920-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "1 gennaio 1920")
+        self.assertEquals(formatted, "gennaio 1920")
         date = "-000000020-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "1 gennaio 20 BC")
+        self.assertEquals(formatted, "gennaio 20 BC")
 
 
 class TestRomanFormatterMethods(unittest.TestCase):
@@ -122,7 +122,6 @@ class TestRomanFormatterMethods(unittest.TestCase):
         date = "-0000000800-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "IXe siècle BC")
-
 
 
 if __name__ == '__main__':
