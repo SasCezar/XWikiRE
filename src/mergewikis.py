@@ -16,10 +16,6 @@ STOP_SECTIONS = {
 
 NO_UNIT = {'label': ''}
 
-FILE_RE = re.compile(
-    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
-    re.IGNORECASE)
-
 BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
@@ -107,14 +103,14 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
 
 
 def create_wikibase_fact(document: Dict) -> Dict:
-    tokens, _, _ = tokenizer.tokenize(document['label'])
+    tokens, _ = tokenizer.tokenize(document['label'])
     fact = {'value': document['label'], "value_sequence": tokens}
     fact.update(document)
     return fact
 
 
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
-    amount = amount[1:] if amount.startswith("-") else amount
+    amount = amount[1:] if amount.startswith("+") else amount
     value = amount + " " + unit['label']
     tokens, _ = tokenizer.tokenize(value)
     fact = {"value": value.strip(), 'value_sequence': tokens}
@@ -136,7 +132,7 @@ def tokenize(merged_document):
 
     for prop in merged_document['properties']:
         tokens, _ = tokenizer.tokenize(merged_document['properties'][prop]['label'])
-        merged_document['properties'][prop]['label'] = tokens
+        merged_document['properties'][prop]['label_sequence'] = tokens
 
 
 def extract_features(merged_document: Dict) -> Dict:
