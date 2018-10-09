@@ -68,7 +68,10 @@ class DateFormatter(ABC):
         return self._year_template.format(year=year, era=era).strip()
 
     def _parse_month(self, date, era=""):
-        date = parse(date, default=self._default_datetime)
+        splitted_date = date.split('-')
+        year = int(splitted_date[0])
+        month = int(splitted_date[1])
+        date = datetime.datetime(year, month, 1)
         formatted = date.strftime(self._month_template) + " " + era
         return formatted.strip()
 

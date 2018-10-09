@@ -40,10 +40,10 @@ class TestFormatterMethods(unittest.TestCase):
         formatter = DateFormatter()
         precision = 10
 
-        date = "+00000001920-01-01T00:00:00Z"
+        date = "+00000001920-01-00T00:00:00Z"
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "January 1920")
-        date = "-000000020-01-01T00:00:00Z"
+        date = "-000000020-01-00T00:00:00Z"
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "January 20 BC")
 
