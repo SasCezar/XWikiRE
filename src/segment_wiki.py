@@ -190,16 +190,22 @@ def extract_page_xmls(f):
             elem.clear()
 
 
-WIKITABLE_REGEX = re.compile(r"{\|.*class=&quot;wikitable&quot;[^}]*\|}")
-WIKIIMAGE_REGEX = re.compile(r"(\[\[[^:|\[]+:[^\.]+\.(\w+)\|.+\]\])")
-WIKIIMAGES_REGEX = re.compile(r"{{images \|.*}}")
+WIKITABLE_REGEX = re.compile(b"{\|.*class=&quot;wikitable&quot;[^}]*\|}")
+WIKIIMAGE_REGEX = re.compile(b"^\[{2}[^:]+:[^\.]+\.\w+[^\n]+\]{2,}", re.MULTILINE)
+WIKIIMAGES_REGEX = re.compile(b"{{images \|.*}}")
+WIKIGALLERY_REGEX = re.compile(b"&lt;gallery[^/]*&lt;/gallery&gt;", re.MULTILINE | re.DOTALL)
+MULTI_NEWLINE = re.compile(b"\n{3,}")
+SPACES = re.compile(b"\s{2,}")
 
-XML_CLEAN_REGEXPS = [WIKITABLE_REGEX, WIKIIMAGE_REGEX, WIKIIMAGES_REGEX]
+XML_CLEAN_REGEXPS = [WIKITABLE_REGEX, WIKIIMAGES_REGEX, WIKIGALLERY_REGEX, WIKIIMAGE_REGEX]
 
 
 def clean_xml_page(page_xml):
     for clean_re in XML_CLEAN_REGEXPS:
-        page_xml = clean_re.sub(" ", page_xml)
+        page_xml = clean_re.sub(b"", page_xml)
+    page_xml = MULTI_NEWLINE.sub(b"\n\n", page_xml)
+    page_xml = SPACES.sub(b" ", page_xml)
+    return page_xml
 
 
 def segment(page_xml, include_interlinks=False, clean=True):
@@ -210,6 +216,8 @@ def segment(page_xml, include_interlinks=False, clean=True):
         Content from page tag.
     include_interlinks : bool
         Whether or not interlinks should be parsed.
+    clean: bool
+        Whether or not the documents should be cleaned from images, and tables
     Returns
     -------
     (str, list of (str, str), (Optionally) dict of (str: str))
