@@ -243,9 +243,11 @@ if __name__ == '__main__':
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
     client.close()
-    for limit in get_chunks(documents_id, chunk_size):
-        merge_wikis(limit)
-    # pool = mp.Pool(processes=6)
-    # pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-    # pool.close()
-    # pool.join()
+    if config.NUM_WORKERS == 1:
+        for limit in get_chunks(documents_id, chunk_size):
+            merge_wikis(limit)
+    else:
+        pool = mp.Pool(processes=6)
+        pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
+        pool.close()
+        pool.join()
