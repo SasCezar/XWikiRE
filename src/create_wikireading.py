@@ -26,12 +26,7 @@ def find_matches(sequence, answer):
     return [index for index, value in enumerate(sequence) if value in elements]
 
 
-def build(docs, configs):
-    answer_vocab = load_vocab(config.ANSWER_VOCAB_PATH)
-    document_vocab = load_vocab(config.DOCUMENT_VOCAB_PATH)
-    raw_answers_vocab = load_vocab(config.RAW_ANSWER_VOCAB_PATH)
-    type_vocab = load_vocab(config.TYPE_VOCAB_PATH)
-
+def build(docs, document_vocab, type_vocab, answer_vocab, raw_answers_vocab):
     processed_docs = []
     for page in docs:
         wikireading_doc = {"key": page['id'],
@@ -94,8 +89,13 @@ def make_wikireading(configs):
     wikidocs = list(wikimerge.find({}, {"_id": 0}).sort("id"))
     chunks = chunkize(wikidocs, chunksize=1000)
     del wikidocs
-    for docs in pool.map(partial(build, configs=configs), chunks):
-        wikireading.insert_many(docs, ordered=False, bypass_document_validation=True)
+    answer_vocab = load_vocab(config.ANSWER_VOCAB_PATH)
+    document_vocab = load_vocab(config.DOCUMENT_VOCAB_PATH)
+    raw_answers_vocab = load_vocab(config.RAW_ANSWER_VOCAB_PATH)
+    type_vocab = load_vocab(config.TYPE_VOCAB_PATH)
+    for docs in pool.imap(partial(build, answer_vocab=answer_vocab, document_vocab=document_vocab,
+                                  raw_answers_vocab=raw_answers_vocab, type_vocab=type_vocab), chunks):
+        wikireading.insert_many(list(docs), ordered=False, bypass_document_validation=True)
 
     pool.terminate()
 

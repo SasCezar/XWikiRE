@@ -234,8 +234,8 @@ def merge_wikis(configs):
     wikidocs = list(wikipedia.find({}, {"_id": 0}).sort("wikidata_id"))
     chunks = chunkize(wikidocs, chunksize=1000)
     del wikidocs
-    for docs in pool.map(partial(merge, configs=configs), chunks):
-        wikimerge.insert_many(docs, ordered=False, bypass_document_validation=True)
+    for docs in pool.imap(partial(merge, configs=configs), chunks):
+        wikimerge.insert_many(list(docs), ordered=False, bypass_document_validation=True)
 
     pool.terminate()
 
