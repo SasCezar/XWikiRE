@@ -37,4 +37,4 @@ if __name__ == '__main__':
         build_vocabs()
 
     if args.subparser == BUILD:
-        make_wikireading()
+        make_wikireading({})

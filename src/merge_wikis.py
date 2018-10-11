@@ -6,7 +6,6 @@ import traceback
 from functools import partial
 from typing import List, Dict, Set
 
-from gensim import utils
 from pymongo import MongoClient
 
 import config
@@ -138,10 +137,6 @@ def tokenize(document):
     document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
 
-    for prop in document['properties']:
-        tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
-        document['properties'][prop]['label_sequence'] = tokens
-
 
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
@@ -151,7 +146,7 @@ def format_text(sections: List, section_titles: List) -> str:
     return result.strip()
 
 
-def merge(docs, lang):
+def merge(docs, configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
@@ -167,8 +162,13 @@ def merge(docs, lang):
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
             prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
-            uncached_prop = clean_wikidata_docs(prop_docs)
-            prop_cache.update(documents_to_dict(uncached_prop))
+            uncached_props = clean_wikidata_docs(prop_docs)
+
+            for uncached_prop in uncached_props:
+                tokens, _, _ = tokenizer.tokenize(uncached_prop['label'])
+                uncached_prop['label_sequence'] = tokens
+
+            prop_cache.update(documents_to_dict(uncached_props))
 
             object_documents_ids = get_objects_id(wikidata_doc['claims'])
             object_documents = wikidata.find({"id": {"$in": object_documents_ids}}, {"_id": 0})
@@ -215,38 +215,32 @@ def merge(docs, lang):
 
     return processed_docs
 
-def merge_wikis():
+
+def chunkize(sequence, chunksize):
+    res = []
+    for j in range(0, len(sequence), chunksize):
+        chunk = sequence[j:j + chunksize]
+        res.append(chunk)
+
+    return res
+
+
+def merge_wikis(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
     pool = multiprocessing.Pool(config.NUM_WORKERS)
-    # process the corpus in smaller chunks of docs, because multiprocessing.Pool
-    # is dumb and would load the entire input into RAM at once...
-    for pages in utils.chunkize(wikipedia.find({}, {"_id": 0}).sort({"wikidata_id"}),
-                                chunksize=1000 * config.NUM_WORKERS, maxsize=1):
-        processed_documents = []
-        for docs in pool.imap(partial(merge, lang='fr'), pages):
-            processed_documents.append(docs)
-            if len(processed_documents) > 1000:
-                wikimerge.insert_many(processed_documents, ordered=False, bypass_document_validation=True)
+    wikidocs = list(wikipedia.find({}, {"_id": 0}).sort("wikidata_id"))
+    chunks = chunkize(wikidocs, chunksize=1000)
+    del wikidocs
+    for docs in pool.map(partial(merge, configs=configs), chunks):
+        wikimerge.insert_many(docs, ordered=False, bypass_document_validation=True)
+
+    pool.terminate()
 
     return
 
 
-def get_chunks(sequence, chunk_size):
-    """
-    Computes the lower limit and the upper limit of a collection of documents
-    :param sequence:
-    :param chunk_size:
-    :return: The doc id for the lower and upper limits
-    """
-    for j in range(0, len(sequence), chunk_size):
-        chunck = sequence[j:j + chunk_size]
-        lower = chunck[0]['wikidata_id']
-        upper = chunck[-1]['wikidata_id']
-        yield (lower, upper)
-
-
 if __name__ == '__main__':
-    merge_wikis()
+    merge_wikis({})
