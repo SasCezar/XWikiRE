@@ -116,41 +116,34 @@ def create_wikibase_fact(document: Dict) -> Dict:
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("-") else amount
     value = amount + " " + unit['label']
-    tokens, _, _ = tokenizer.tokenize(value)
-    fact = {"value": value.strip(), 'value_sequence': tokens}
+    fact = {"value": value.strip(), 'value_sequence': value.split()}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    tokens, _, _ = tokenizer.tokenize(date)
-    fact = {"value": date, 'value_sequence': tokens}
+    fact = {"value": date, 'value_sequence': date.split()}
     return fact
 
 
-def tokenize(merged_document):
-    article_text = merged_document['text']
+def tokenize(document):
+    article_text = document['text']
     tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
-    merged_document['string_sequence'] = tokens
-    merged_document['break_levels'] = break_levels
-    merged_document['pos_tagger_sequence'] = pos_tagger_tokens
+    document['string_sequence'] = tokens
+    document['break_levels'] = break_levels
+    document['pos_tagger_sequence'] = pos_tagger_tokens
+    document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
 
-    for prop in merged_document['properties']:
-        tokens, _, _ = tokenizer.tokenize(merged_document['properties'][prop]['label'])
-        merged_document['properties'][prop]['label_sequence'] = tokens
-
-
-def extract_features(merged_document: Dict) -> Dict:
-    tokenize(merged_document)
-    # pos_tags = pos_tagger.tag(merged_document['string_sequence'])
-    # merged_document['pos_tags'] = pos_tags
-    return merged_document
+    for prop in document['properties']:
+        tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
+        document['properties'][prop]['label_sequence'] = tokens
 
 
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    result = re.sub("===[^=]+===", "", result)
     result = re.sub("\n{3,}", "\n\n", result)
+    result = re.sub("={2,5}", "", result)
+    result = re.sub("'{2,3}", "", result)
     return result.strip()
 
 
@@ -212,8 +205,7 @@ def merge_wikis(limit):
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
-            document_features = extract_features(merged_document)
-            merged_document.update(document_features)
+            tokenize(merged_document)
 
             processed_docs.append(merged_document)
 
@@ -245,15 +237,15 @@ def get_chunks(sequence, chunk_size):
 
 
 if __name__ == '__main__':
-    chunk_size = 5000
+    chunk_size = 100000
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
     client.close()
-    # for limit in get_chunks(documents_id, chunk_size):
-    #   merge_wikis(limit)
-    pool = mp.Pool(processes=6)
-    pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-    pool.close()
-    pool.join()
+    for limit in get_chunks(documents_id, chunk_size):
+        merge_wikis(limit)
+    # pool = mp.Pool(processes=6)
+    # pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
+    # pool.close()
+    # pool.join()

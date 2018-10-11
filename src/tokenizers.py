@@ -8,10 +8,11 @@ class TokenizerI(ABC):
 
     def __init__(self):
         self.BREAK_LEVEL_TOKENS = {
-            " ": 1,
-            "\n": 2,
-            "SENTENCE_BREAK": 3,
-            "\n\n": 4,
+            " ": [1],
+            "\n": [2],
+            "SENTENCE_BREAK": [3],
+            "\n\n": [4],
+            "\n\n ": [4, 1]
         }
 
         self.SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
@@ -20,16 +21,7 @@ class TokenizerI(ABC):
         raise NotImplemented
 
     def extract_break_levels(self, tokens):
-        breaks = []
-        tokens_iter = enumerate(tokens)
-        for i, token in tokens_iter:
-            if token in self.BREAK_LEVEL_TOKENS:
-                breaks.append(self.BREAK_LEVEL_TOKENS[token])
-            elif token in self.SENTENCE_BREAKS:
-                breaks.append(self.BREAK_LEVEL_TOKENS['SENTENCE_BREAK'])
-            else:
-                breaks.append(0)
-        return breaks
+        raise NotImplemented
 
 
 class SpacyTokenizer(TokenizerI):
@@ -43,21 +35,22 @@ class SpacyTokenizer(TokenizerI):
         return tokens, break_levels, pos_tagger_seq
 
     def _decompose(self, doc):
-        tokenized_text = []
         filtered_tokens = []
         pos_tagger_seq = []
         token_separators = [0]
-        for token in doc:
-            tokenized_text.append(token.text) if token.text not in self.BREAK_LEVEL_TOKENS else None
+        tokens = list(doc)
+        for i, token in enumerate(tokens):
             if token.text not in self.BREAK_LEVEL_TOKENS:
+                filtered_tokens.append(token.text)
                 if token.text in self.SENTENCE_BREAKS:
+                    token_separators += self.BREAK_LEVEL_TOKENS['SENTENCE_BREAK']
                     pos_tagger_seq.append(token.text + "\n")
                 else:
                     pos_tagger_seq.append(token.text)
-            filtered_tokens.append(token.text)
-            if token.whitespace_:  # filter out empty strings
-                tokenized_text.append(token.whitespace_)
-                token_separators.append(self.BREAK_LEVEL_TOKENS[token.whitespace_])
+                if token.whitespace_:  # filter out empty strings
+                    token_separators += self.BREAK_LEVEL_TOKENS[token.whitespace_]
+                elif i + 1 < len(tokens) and str(tokens[i+1]) not in self.BREAK_LEVEL_TOKENS:
+                    token_separators.append(0)
             else:
-                token_separators.append(0)
+                token_separators += self.BREAK_LEVEL_TOKENS[token.text]
         return filtered_tokens, token_separators, pos_tagger_seq
