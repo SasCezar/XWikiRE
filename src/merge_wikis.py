@@ -133,6 +133,7 @@ def tokenize(document):
     document['break_levels'] = break_levels
     document['pos_tagger_sequence'] = pos_tagger_tokens
     document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
+    document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
 
     for prop in document['properties']:
         tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
@@ -147,7 +148,7 @@ def format_text(sections: List, section_titles: List) -> str:
     return result.strip()
 
 
-def merge_wikis(limit):
+def merge_wikis(args):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
@@ -158,7 +159,7 @@ def merge_wikis(limit):
     prop_cache = {}
 
     processed_docs = []
-    for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+    for page in wikipedia.find({"wikidata_id": {"$gte": args[0], "$lte": args[1]}}, {"_id": 0}):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
@@ -236,8 +237,8 @@ def get_chunks(sequence, chunk_size):
         yield (lower, upper)
 
 
-if __name__ == '__main__':
-    chunk_size = 100000
+def wikimerge():
+    chunk_size = config.CHUNK_SIZE
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
@@ -247,7 +248,11 @@ if __name__ == '__main__':
         for limit in get_chunks(documents_id, chunk_size):
             merge_wikis(limit)
     else:
-        pool = mp.Pool(processes=6)
+        pool = mp.Pool(processes=config.NUM_WORKERS)
         pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
         pool.close()
         pool.join()
+
+
+if __name__ == '__main__':
+    wikimerge()
