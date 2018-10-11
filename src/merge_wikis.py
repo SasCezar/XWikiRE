@@ -1,9 +1,11 @@
 import collections
+import multiprocessing
 import multiprocessing as mp
 import re
 import traceback
 from typing import List, Dict, Set
 
+from gensim import utils
 from pymongo import MongoClient
 
 import config
@@ -148,7 +150,7 @@ def format_text(sections: List, section_titles: List) -> str:
     return result.strip()
 
 
-def merge_wikis(args):
+def merge_wikis():
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
@@ -159,7 +161,10 @@ def merge_wikis(args):
     prop_cache = {}
 
     processed_docs = []
-    for page in wikipedia.find({"wikidata_id": {"$gte": args[0], "$lte": args[1]}}, {"_id": 0}):
+    pool = multiprocessing.Pool(config.NUM_WORKERS)
+    # process the corpus in smaller chunks of docs, because multiprocessing.Pool
+    # is dumb and would load the entire input into RAM at once...
+    for page in utils.chunkize(wikipedia.find({}, {"_id": 0}).sort({"wikidata_id"}), chunksize=1000 * config.NUM_WORKERS, maxsize=1):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
@@ -238,20 +243,7 @@ def get_chunks(sequence, chunk_size):
 
 
 def wikimerge():
-    chunk_size = config.CHUNK_SIZE
-    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
-    db = client[config.DB]
-    wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
-    client.close()
-    if config.NUM_WORKERS == 1:
-        for limit in get_chunks(documents_id, chunk_size):
-            merge_wikis(limit)
-    else:
-        pool = mp.Pool(processes=config.NUM_WORKERS)
-        pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-        pool.close()
-        pool.join()
+    merge_wikis()
 
 
 if __name__ == '__main__':
