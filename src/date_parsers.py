@@ -87,3 +87,12 @@ class DateFormatter(ABC):
 class RomanLanguageDateFormatter(DateFormatter):
     def to_human(self, value):
         return numeral.int2roman(value, only_ascii=True)
+
+
+class DateFactory(object):
+    @staticmethod
+    def create(lang, locale):
+        if lang == 'en':
+            return DateFormatter(lang, locale)
+        if lang in ['fr', 'it']:
+            return RomanLanguageDateFormatter(lang, locale)

@@ -1,7 +1,8 @@
 import collections
+import logging
 import multiprocessing
-import multiprocessing as mp
 import re
+import sys
 import traceback
 from functools import partial
 from typing import List, Dict, Set
@@ -9,6 +10,10 @@ from typing import List, Dict, Set
 from pymongo import MongoClient
 
 import config
+from date_parsers import DateFactory
+
+logger = logging.getLogger(__name__)
+
 
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
@@ -18,11 +23,6 @@ STOP_SECTIONS = {
 
 NO_UNIT = {'label': ''}
 
-FILE_RE = re.compile(
-    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
-    re.IGNORECASE)
-
-BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
 
@@ -151,7 +151,7 @@ def merge(docs, configs):
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
 
-    date_formatter = config.DATE_FORMATTER
+    date_formatter = DateFactory.create(config.LANG, config.LOCALE)
     prop_cache = {}
 
     processed_docs = []
@@ -243,4 +243,7 @@ def merge_wikis(configs):
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
+    logger.info("Running %s", " ".join(sys.argv))
     merge_wikis({})
+    logger.info("Completed %s", " ".join(sys.argv[0]))

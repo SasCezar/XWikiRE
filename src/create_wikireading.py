@@ -32,6 +32,7 @@ def build(docs, configs):
     raw_answers_vocab = load_vocab(config.RAW_ANSWER_VOCAB_PATH)
     type_vocab = load_vocab(config.TYPE_VOCAB_PATH)
 
+    processed_docs = []
     for page in docs:
         wikireading_doc = {"key": page['id'],
                            "break_levels": page['break_levels'],
@@ -69,6 +70,10 @@ def build(docs, configs):
             wikireading_doc['raw_answer_ids'] = raw_answers
             wikireading_doc['answer_breaks'] = answer_breaks
             wikireading_doc['full_match_answer_location'] = full_match_answer_location
+
+            processed_docs.append(wikireading_doc)
+
+    return processed_docs
 
 
 def chunkize(sequence, chunksize):

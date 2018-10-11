@@ -111,3 +111,7 @@ def build_vocabs():
     build_document_vocab(collection, config.DOCUMENT_VOCAB_PATH)
     build_pos_vocab(collection, config.TYPE_VOCAB_PATH)
     build_answer_vocab(collection, config.ANSWER_VOCAB_PATH)
+
+
+if __name__ == '__main__':
+    build_vocabs()

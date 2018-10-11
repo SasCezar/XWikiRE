@@ -1,6 +1,5 @@
 import os
 
-from date_parsers import DateFormatter
 from tokenizers import SpacyTokenizer
 
 LANG = "fr"
@@ -18,9 +17,8 @@ WIKIMERGE_COLLECTION = "test_{}_wikimerge".format(LANG)
 WIKIREADING_COLLECTION = "{}_wikireading".format(LANG)
 
 TOKENIZER = SpacyTokenizer(LANG, disable=['parser', 'ner', 'textcat', 'tagger'])
-DATE_FORMATTER = DateFormatter(lang=LANG, out_locale=LOCALE)
 
-VOCABS_FOLDER = "vocabs"
+VOCABS_FOLDER = "..\\vocabs"
 
 ANSWER_VOCAB_PATH = os.path.join(VOCABS_FOLDER, "answer.vocab")
 DOCUMENT_VOCAB_PATH = os.path.join(VOCABS_FOLDER, "document.vocab")
