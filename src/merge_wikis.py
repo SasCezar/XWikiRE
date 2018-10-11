@@ -3,6 +3,7 @@ import multiprocessing
 import multiprocessing as mp
 import re
 import traceback
+from functools import partial
 from typing import List, Dict, Set
 
 from gensim import utils
@@ -150,21 +151,16 @@ def format_text(sections: List, section_titles: List) -> str:
     return result.strip()
 
 
-def merge_wikis():
+def merge(docs, lang):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
-    wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    wikimerge = db[config.WIKIMERGE_COLLECTION]
 
     date_formatter = config.DATE_FORMATTER
     prop_cache = {}
 
     processed_docs = []
-    pool = multiprocessing.Pool(config.NUM_WORKERS)
-    # process the corpus in smaller chunks of docs, because multiprocessing.Pool
-    # is dumb and would load the entire input into RAM at once...
-    for page in utils.chunkize(wikipedia.find({}, {"_id": 0}).sort({"wikidata_id"}), chunksize=1000 * config.NUM_WORKERS, maxsize=1):
+    for page in docs:
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
@@ -214,16 +210,26 @@ def merge_wikis():
             tokenize(merged_document)
 
             processed_docs.append(merged_document)
-
-            if len(processed_docs) >= BATCH_WRITE_SIZE:
-                wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
-                processed_docs = []
-
         except:
             traceback.print_exc()
 
-    if processed_docs:
-        wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+    return processed_docs
+
+def merge_wikis():
+    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
+    db = client[config.DB]
+    wikipedia = db[config.WIKIPEDIA_COLLECTION]
+    wikimerge = db[config.WIKIMERGE_COLLECTION]
+    pool = multiprocessing.Pool(config.NUM_WORKERS)
+    # process the corpus in smaller chunks of docs, because multiprocessing.Pool
+    # is dumb and would load the entire input into RAM at once...
+    for pages in utils.chunkize(wikipedia.find({}, {"_id": 0}).sort({"wikidata_id"}),
+                                chunksize=1000 * config.NUM_WORKERS, maxsize=1):
+        processed_documents = []
+        for docs in pool.imap(partial(merge, lang='fr'), pages):
+            processed_documents.append(docs)
+            if len(processed_documents) > 1000:
+                wikimerge.insert_many(processed_documents, ordered=False, bypass_document_validation=True)
 
     return
 
@@ -242,9 +248,5 @@ def get_chunks(sequence, chunk_size):
         yield (lower, upper)
 
 
-def wikimerge():
-    merge_wikis()
-
-
 if __name__ == '__main__':
-    wikimerge()
+    merge_wikis()
