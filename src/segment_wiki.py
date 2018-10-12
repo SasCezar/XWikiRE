@@ -190,9 +190,9 @@ def extract_page_xmls(f):
             elem.clear()
 
 
-WIKITABLE_REGEX = re.compile(b"{\|\s*class=&quot;wikitable&quot;[^.]*\|}", re.MULTILINE)
-WIKIIMAGE_REGEX = re.compile(b"^\[{2}[^:]+:[^\.]+\.\w+[^\n]+\]{2,}", re.MULTILINE)
-WIKIIMAGES_REGEX = re.compile(b"{{images \|.*}}")
+WIKITABLE_REGEX = re.compile(b"{\|\s*class=&quot;wikitable[^&]*&quot;[^.]*\|}", re.MULTILINE)
+WIKIIMAGE_REGEX = re.compile(b"^\[{2}[^:\n<]+:[^\.\n<]+\.\w+[^\n<]+\]{2,}", re.MULTILINE)
+WIKIIMAGES_REGEX = re.compile(b"\{\{\s*images(\s|\n)*(\|[^|}]+)*(?=\}{2})\}\}\n")
 WIKIGALLERY_REGEX = re.compile(b"&lt;gallery[^/]*&lt;/gallery&gt;", re.MULTILINE | re.DOTALL)
 MULTI_NEWLINE = re.compile(b"\n{3,}")
 

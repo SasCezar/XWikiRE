@@ -16,10 +16,6 @@ STOP_SECTIONS = {
 
 NO_UNIT = {'label': ''}
 
-FILE_RE = re.compile(
-    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
-    re.IGNORECASE)
-
 BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
@@ -142,10 +138,15 @@ def tokenize(document):
 
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    result = re.sub("\n{3,}", "\n\n", result)
-    result = re.sub("={2,5}", "", result)
+    result = re.sub("(Categoria|Catégorie|Categoría|Kategorie):[^\n]", "", result)
+    result = re.sub("={2,}[^=]*={2,}", "", result)
     result = re.sub("'{2,3}", "", result)
+    result = re.sub("\*", "", result)
+    result = re.sub("\n{3,}", "\n\n", result)
     return result.strip()
+
+
+MIN_SIZE = 0
 
 
 def merge_wikis(args):
@@ -163,6 +164,9 @@ def merge_wikis(args):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
+            text = format_text(page['section_texts'], page['section_titles'])
+            if MIN_SIZE and len(text) < MIN_SIZE:
+                continue
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
             prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
@@ -202,11 +206,11 @@ def merge_wikis(args):
                         traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
-            merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
+            merged_document['text'] = text
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
-            tokenize(merged_document)
+            # tokenize(merged_document)
 
             processed_docs.append(merged_document)
 

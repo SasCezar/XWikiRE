@@ -1,12 +1,11 @@
-import argparse
 import csv
+import multiprocessing as mp
 from collections import Counter
 from itertools import chain
 
 from pymongo import MongoClient
 
 import config
-import multiprocessing as mp
 
 OTHER_TOKENS = [(0, ("!!!TOTAL", 0)),
                 (0, ("!!!FLAGS", 0)),
@@ -34,8 +33,10 @@ def build_document_vocab(collection):
     for doc in texts:
         tokens = doc[source]
         word_count.update(tokens)
-        for claim in doc['claims']:
-            word_count.update(tokens)
+        for prop_id in doc['facts']:
+            for fact in doc['facts'][prop_id]:
+                tokens = fact['value_sequence']
+                word_count.update(tokens)
 
     total = 0
     for key in word_count:
@@ -74,10 +75,9 @@ def build_answer_vocab(collection):
 
     answer_vocab = Counter()
     for doc in texts:
-        for claim in doc['claims']:
-            text = claim['datavalue']['value']['label']
-            tokens = [token.text for token in d]
-            answer_vocab.update(tokens)
+        for prop in doc['facts']:
+            for fact in doc['facts'][prop]:
+                answer_vocab.update(fact['value_sequence'])
 
     total = 0
     for key in answer_vocab:
@@ -94,6 +94,11 @@ def build_char_vocab(collection):
     char_count = Counter()
     for doc in texts:
         char_count.update(list(doc['text']))
+        for prop in doc['facts']:
+            prop_label = doc['properties'][prop]['label']
+            fact_label = doc['facts'][prop]['value']
+            char_count.update(list(prop_label))
+            char_count.update(list(fact_label))
 
     total = 0
     for key in char_count:
