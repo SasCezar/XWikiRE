@@ -137,7 +137,7 @@ def tokenize(document):
 
 
 def format_text(sections: List, section_titles: List) -> str:
-    result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
+    result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS[config.LANG]))
     result = re.sub("(Categoria|Catégorie|Categoría|Kategorie):[^\n]", "", result)
     result = re.sub("={2,}[^=]*={2,}", "", result)
     result = re.sub("'{2,3}", "", result)
