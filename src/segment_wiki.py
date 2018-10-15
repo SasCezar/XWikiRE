@@ -107,6 +107,7 @@ def segment_and_write_all_articles(file_path, output_file, min_article_character
         Number of parallel workers, max(1, multiprocessing.cpu_count() - 1) if None.
     include_interlinks: bool
         Whether or not interlinks should be included in the output
+    wikidata_mapping: str Path to the wikidata mapping, a pickled dictionary
     """
     if output_file is None:
         outfile = getattr(sys.stdout, 'buffer', sys.stdout)  # we want write bytes, so for py3 we used 'buffer'
