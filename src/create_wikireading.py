@@ -1,4 +1,3 @@
-import argparse
 import csv
 from collections import Counter
 from itertools import chain
@@ -7,6 +6,8 @@ from pymongo import MongoClient
 
 import config
 import multiprocessing as mp
+
+from utils import find_full_matches, find_matches
 
 OTHER_TOKENS = [(0, ("!!!TOTAL", 0)),
                 (0, ("!!!FLAGS", 0)),
@@ -112,25 +113,6 @@ def build_vocabs():
     build_document_vocab(collection)
     build_pos_vocab(collection)
     build_answer_vocab(collection)
-
-
-def find_sub_list(sublist, list):
-    results = []
-    sll = len(sublist)
-    for ind in (i for i, e in enumerate(list) if e == sublist[0]):
-        if list[ind:ind + sll] == sublist:
-            results.append(range(ind, ind + sll))
-
-    return results
-
-
-def find_full_matches(sequence, answer):
-    return find_sub_list(answer, sequence)
-
-
-def find_matches(sequence, answer):
-    elements = set(answer)
-    return [index for index, value in enumerate(sequence) if value in elements]
 
 
 def build(limit):
