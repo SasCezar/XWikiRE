@@ -140,9 +140,6 @@ def tokenize(document):
 
 def format_text(sections: List, section_titles: List) -> str:
     result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    result = re.sub("\n{3,}", "\n\n", result)
-    result = re.sub("={2,5}", "", result)
-    result = re.sub("'{2,3}", "", result)
     return result.strip()
 
 
@@ -157,7 +154,7 @@ def merge(docs, configs):
     processed_docs = []
     for page in docs:
         try:
-            wikidata_doc = wikidata.find_one({"id": page['wikibase_item']}, {"_id": 0})
+            wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
@@ -203,7 +200,7 @@ def merge(docs, configs):
                         traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
-            merged_document['text'] = page['text']
+            merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
@@ -231,7 +228,7 @@ def merge_wikis(configs):
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
     pool = multiprocessing.Pool(config.NUM_WORKERS)
-    wikidocs = list(wikipedia.find({}, {"text": 1, "wikibase_item": 1, "_id": 0}).sort("wikibase_item"))
+    wikidocs = list(wikipedia.find({}, {"_id": 0}).sort("wikidata_id"))
     chunks = chunkize(wikidocs, chunksize=1000)
     del wikidocs
     for docs in pool.imap(partial(merge, configs=configs), chunks):
