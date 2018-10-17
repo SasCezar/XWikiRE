@@ -1,6 +1,6 @@
 import path
 
-from date_parsers import DateFormatter
+from date_parsers import DateFormatter, DateFormatterFactory
 from tokenizers import SpacyTokenizer
 
 
@@ -23,7 +23,7 @@ WIKIPEDIA_COLLECTION = "{}_wikipedia".format(LANG)
 WIKIMERGE_COLLECTION = "{}_wikimerge".format(LANG)
 
 TOKENIZER = SpacyTokenizer(LANG, disable=['parser', 'ner', 'textcat', 'tagger'])
-DATE_FORMATTER = DateFormatter(lang=LANG, out_locale=LOCALE)
+DATE_FORMATTER = DateFormatterFactory.get_formatter(lang=LANG, out_locale=LOCALE)
 
 VOCABS_FOLDER = "vocabs"
 

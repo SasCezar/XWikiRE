@@ -59,7 +59,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "1 January 20 BC")
 
     def test_month_french(self):
-        formatter = DateFormatter(out_locale='fr-FR')
+        formatter = DateFormatter(lang='fr', out_locale='fr-FR')
         precision = 10
 
         date = "+00000001920-01-02T00:00:00Z"
@@ -67,10 +67,10 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "janvier 1920")
         date = "-000000020-01-10T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "janvier 20 BC")
+        self.assertEquals(formatted, "janvier 20 J.-C")
 
     def test_month_italian(self):
-        formatter = DateFormatter(out_locale='it-IT')
+        formatter = DateFormatter(lang='it', out_locale='it-IT')
         precision = 10
 
         date = "+00000001920-01-01T00:00:00Z"
@@ -78,7 +78,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "gennaio 1920")
         date = "-000000020-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "gennaio 20 BC")
+        self.assertEquals(formatted, "gennaio 20 a.C.")
 
 
 class TestRomanFormatterMethods(unittest.TestCase):
@@ -111,7 +111,7 @@ class TestRomanFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "XXI millennio")
         date = "-00000002000-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "III millennio BC")
+        self.assertEquals(formatted, "III millennio a.C.")
 
     def test_century_french(self):
         formatter = RomanLanguageDateFormatter(lang="fr", out_locale='fr-FR')
@@ -121,7 +121,7 @@ class TestRomanFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "XXe siècle")
         date = "-0000000800-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
-        self.assertEquals(formatted, "IXe siècle BC")
+        self.assertEquals(formatted, "IXe siècle J.-C")
 
 
 if __name__ == '__main__':
