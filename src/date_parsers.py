@@ -15,10 +15,17 @@ MILLENNIUM_TOKEN = {
 }
 
 CENTURY_TOKEN = {
-    'en': ' century',
-    'fr': 'e siècle',
-    'it': ' secolo',
-    'es': ' siglo'
+    'en': '{century} century {era}',
+    'fr': '{century}e siècle {era}',
+    'it': '{century} secolo {era}',
+    'es': 'siglo {century} {era}'
+}
+
+BC_TOKEN = {
+    'en': 'BC',
+    'fr': 'J.-C',
+    'it': 'a.C.',
+    'es': 'a. C.'
 }
 
 
@@ -34,9 +41,9 @@ class DateFormatter(ABC):
         }
 
         locale.setlocale(locale.LC_TIME, out_locale)
-        self._BCE_TOKEN = 'BC'
+        self._BCE_TOKEN = BC_TOKEN[lang]
         self._millenium_template = "{millennium}" + MILLENNIUM_TOKEN[lang] + " {era}"
-        self._century_template = "{century}" + CENTURY_TOKEN[lang] + " {era}"
+        self._century_template = CENTURY_TOKEN[lang]
         self._day_template = "%#d %B %#Y"
         self._month_template = "%B %#Y"
         self._year_template = "{year} {era}"
@@ -87,3 +94,12 @@ class DateFormatter(ABC):
 class RomanLanguageDateFormatter(DateFormatter):
     def to_human(self, value):
         return numeral.int2roman(value, only_ascii=True)
+
+
+class DateFormatterFactory(object):
+    @staticmethod
+    def get_formatter(lang, out_locale):
+        if lang in ['en']:
+            return DateFormatter(lang, out_locale)
+        else:
+            return RomanLanguageDateFormatter(lang, out_locale)
