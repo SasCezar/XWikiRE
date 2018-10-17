@@ -1,6 +1,5 @@
 import collections
 import multiprocessing as mp
-import re
 import traceback
 from typing import List, Dict, Set
 
@@ -148,6 +147,7 @@ def distant_supervision(answer_sequence, entity_sequence, text_sequence, sentenc
 
     return False
 
+
 def extract_omer(page):
     omer_doc = {"key": page['id'], "break_levels": page['break_levels'],
                 "string_sequence": page['string_sequence'], "paragraph_breaks": page['paragraph_breaks'],
@@ -173,10 +173,7 @@ def extract_omer(page):
             answer_location.append(find_matches(omer_doc["string_sequence"], answer_sequence))
 
             indexes = distant_supervision(answer_sequence, omer_doc['entity_sequence'],
-                                omer_doc['string_sequence'], omer_doc['sentence_breaks'])
-
-
-
+                                          omer_doc['string_sequence'], omer_doc['sentence_breaks'])
 
         omer_doc['answer_string_sequence'] = answer_string_sequence
         omer_doc['raw_answer_ids'] = raw_answers

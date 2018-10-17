@@ -3,9 +3,15 @@ import path
 from date_parsers import DateFormatter
 from tokenizers import SpacyTokenizer
 
-LANG = "fr"
-EXT_LANG = "french"
-LOCALE = 'fr-FR'
+
+def set_lang(lang, ext_lang, locale):
+    global LANG, EXT_LANG, LOCALE
+    LANG = lang
+    EXT_LANG = ext_lang
+    LOCALE = locale
+
+
+LANG, EXT_LANG, LOCALE = None, None, None
 NUM_WORKERS = 8
 CHUNK_SIZE = 100000
 

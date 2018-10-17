@@ -1,6 +1,9 @@
+import argparse
 import collections
+import logging
 import multiprocessing as mp
 import re
+import sys
 import traceback
 from typing import List, Dict, Set
 
@@ -11,7 +14,13 @@ import config
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
     'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
-    'it': []
+    'it': ['Note', 'Bibliografia', 'Voci correlate', 'Altri progetti', 'Collegamenti esterni']
+}
+
+STOP_SECTIONS_RE = {
+    'en': re.compile("===\s({})\s===".format('|'.join(STOP_SECTIONS['en']))),
+    'fr': re.compile("===\s({})\s===".format('|'.join(STOP_SECTIONS['fr']))),
+    'it': re.compile("===\s({})\s===".format('|'.join(STOP_SECTIONS['it'])))
 }
 
 NO_UNIT = {'label': ''}
@@ -148,6 +157,13 @@ def format_text(sections: List, section_titles: List) -> str:
     return result.strip()
 
 
+def clean_text(text: str) -> str:
+    clean_index = STOP_SECTIONS_RE[config.LANG].search(text).start()
+    if clean_index > 0:
+        text = text[:clean_index].strip()
+    return text
+
+
 def merge_wikis(args):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
@@ -244,15 +260,21 @@ def wikimerge():
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
     client.close()
-    if config.NUM_WORKERS == 1:
-        for limit in get_chunks(documents_id, chunk_size):
-            merge_wikis(limit)
-    else:
-        pool = mp.Pool(processes=config.NUM_WORKERS)
-        pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-        pool.close()
-        pool.join()
+    pool = mp.Pool(processes=config.NUM_WORKERS)
+    pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
+    pool.close()
+    pool.join()
 
 
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
+    parser = argparse.ArgumentParser(description="Merges wikipedia documents with info from wikidata into a single "
+                                                 "MongoDB colletion")
+    parser.add_argument('--lang', help='Language code (i.e. en)', required=True)
+    parser.add_argument('--ext_lang', help='Extended language code (i.e. english)', required=True)
+    parser.add_argument('--locale', help='Locale used for date formatting according to wikipedia style', required=True)
+    args = parser.parse_args()
+
+    logging.info("running %s", " ".join(sys.argv))
+    config.set_lang(args.lang, args.ext_lang, args.locale)
     wikimerge()
