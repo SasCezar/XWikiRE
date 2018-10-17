@@ -54,12 +54,12 @@ class DateFormatter(ABC):
         return self._year_template.format(year=year, era=era)
 
     def _parse_millennium(self, date, era=""):
-        year = (int(date.split("-")[0]) / 1000) + 1
+        year = int(int(date.split("-")[0]) / 1000) + 1
         millennium = self.to_human(year)
         return self._millenium_template.format(millennium=millennium, era=era).strip()
 
     def _parse_century(self, date, era=""):
-        year = (int(date.split("-")[0]) / 100) + 1
+        year = int(int(date.split("-")[0]) / 100) + 1
         century = self.to_human(year)
         return self._century_template.format(century=century, era=era).strip()
 
@@ -86,7 +86,7 @@ class DateFormatter(ABC):
 
 class RomanLanguageDateFormatter(DateFormatter):
     def to_human(self, value):
-        return numeral.int2roman(value, only_ascii=True)
+        return numeral.int2roman(int(value), only_ascii=True)
 
 
 class DateFactory(object):

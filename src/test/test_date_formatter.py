@@ -123,6 +123,12 @@ class TestRomanFormatterMethods(unittest.TestCase):
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "IXe siècle BC")
 
+    def test_error(self):
+        date = '+1101-00-00T00:00:00Z'
+        formatter = RomanLanguageDateFormatter(lang="fr", out_locale='fr-FR')
+        precision = 7
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "XIIe siècle")
 
 if __name__ == '__main__':
     unittest.main()
