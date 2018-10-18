@@ -1,11 +1,14 @@
 import collections
 import logging
-import multiprocessing as mp
+import multiprocessing
 import re
 import sys
+import time
 import traceback
+from functools import partial
 from typing import List, Dict, Set
 
+from natural.date import compress
 from pymongo import MongoClient
 
 import config
@@ -152,7 +155,8 @@ def clean_text(text: str) -> str:
     return text
 
 
-def merge_wikis(limit):
+def merge(limit, configs):
+    start_time = time.time()
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
@@ -163,6 +167,7 @@ def merge_wikis(limit):
     prop_cache = {}
 
     processed_docs = []
+    n = 0
     for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
@@ -215,6 +220,7 @@ def merge_wikis(limit):
             processed_docs.append(merged_document)
 
             if len(processed_docs) >= BATCH_WRITE_SIZE:
+                n += len(processed_docs)
                 wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
                 processed_docs = []
 
@@ -223,24 +229,30 @@ def merge_wikis(limit):
 
     if processed_docs:
         wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+        n += processed_docs
 
-    return
+    elapsed = start_time - time.time()
+    return n, elapsed
 
 
-def wikimerge():
-    chunk_size = config.CHUNK_SIZE
+def wikimerge(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
-    client.close()
-    pool = mp.Pool(processes=config.NUM_WORKERS)
-    pool.map(merge_wikis, get_chunks(documents_id, chunk_size, 'wikidata_id'))
+    pool = multiprocessing.Pool(config.NUM_WORKERS)
+    wikidocs = list(wikipedia.find({}, {'wikibase_id': 1, '_id': 0}).sort('wikibase_id'))
+    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikibase_id')
+    del wikidocs
+    for n, elapsed in pool.imap(partial(merge, configs=configs), chunks):
+        logging.info("Processed {} more documents in {}".format(n, compress(elapsed)))
+
     pool.terminate()
+
+    return
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
 
     logging.info("running %s", " ".join(sys.argv))
-    wikimerge()
+    wikimerge({})
