@@ -65,7 +65,7 @@ def _clean_doc(doc: Dict) -> Dict:
     :return:
     """
     doc['label'] = doc['labels'][config.LANG]['value']
-    doc['aliases'] = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
+    doc['aliases'] = doc['aliases'].get(config.LANG, [])
 
     for key in DOC_CLEAN_KEYS:
         try:
@@ -135,14 +135,12 @@ def tokenize(document):
     article_text = document['text']
     tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
     document['string_sequence'] = tokens
+    tokens, _, _ = tokenizer.tokenize(document['label'])
+    document['label_sequence'] = tokens
     document['break_levels'] = break_levels
     document['pos_tagger_sequence'] = pos_tagger_tokens
     document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
-
-    for prop in document['properties']:
-        tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
-        document['properties'][prop]['label_sequence'] = tokens
 
     for prop in document['facts']:
         for fact in document['facts'][prop]:
@@ -159,6 +157,15 @@ def clean_text(text: str) -> str:
     text = re.sub("\n{3,}", "\n\n", text)
     tokens, _, _ = tokenizer.tokenize(text)
     return text
+
+
+def tokenize_props(props):
+    for prop in props:
+        tokens, _, _ = tokenizer.tokenize(prop['label'])
+        prop['label_sequence'] = tokens
+        # for alias in prop['aliases']:
+        #    tokens, _, _ = tokenizer.tokenize(prop['value'])
+        #    alias['value_sequence'] = tokens
 
 
 def merge(limit, configs):
@@ -182,6 +189,7 @@ def merge(limit, configs):
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
             prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
             uncached_prop = clean_wikidata_docs(prop_docs)
+            tokenize_props(uncached_prop)
             prop_cache.update(documents_to_dict(uncached_prop))
 
             object_documents_ids = get_objects_id(wikidata_doc['claims'])
@@ -254,7 +262,8 @@ def wikimerge(configs):
     for n, elapsed in pool.map(partial(merge, configs=configs), chunks):
         total += n
         part = int(time.time() - start_time)
-        logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed), compress(part)))
+        logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed),
+                                                                                           compress(part)))
 
     pool.terminate()
     elapsed = int(time.time() - start_time)
