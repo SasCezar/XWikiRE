@@ -145,8 +145,9 @@ def tokenize(document):
         document['properties'][prop]['label_sequence'] = tokens
 
     for prop in document['facts']:
-        tokens, _, _ = tokenizer.tokenize(document['facts'][prop]['label'])
-        document['facts'][prop]['label_sequence'] = tokens
+        for fact in document['facts'][prop]:
+            tokens, _, _ = tokenizer.tokenize(fact['value'])
+            fact['value_sequence'] = tokens
 
 
 def clean_text(text: str) -> str:
@@ -245,11 +246,11 @@ def wikimerge(configs):
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     wikidocs = list(wikipedia.find({}, {'wikidata_id': 1, '_id': 0}).sort('wikidata_id'))
+    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
     del wikidocs
     start_time = time.time()
     total = 0
     pool = multiprocessing.Pool(config.NUM_WORKERS)
-    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
     for n, elapsed in pool.map(partial(merge, configs=configs), chunks):
         total += n
         part = int(time.time() - start_time)
