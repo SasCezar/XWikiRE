@@ -15,10 +15,25 @@ MILLENNIUM_TOKEN = {
 }
 
 CENTURY_TOKEN = {
-    'en': ' century',
-    'fr': 'e siècle',
-    'it': ' secolo',
-    'es': ' siglo'
+    'en': '{century} century {era}',
+    'fr': '{century}e siècle {era}',
+    'it': '{century} secolo {era}',
+    'es': 'siglo {century} {era}'
+}
+
+BC_TOKEN = {
+    'en': 'BC',
+    'fr': 'J.-C',
+    'it': 'a.C.',
+    'es': 'a. C.'
+}
+
+MONTH_TEMPLATE = {
+    "es": "%B de %#Y"
+}
+
+DAY_TEMPLATE = {
+    'es': "%#d de %B de %#Y"
 }
 
 
@@ -34,11 +49,11 @@ class DateFormatter(ABC):
         }
 
         locale.setlocale(locale.LC_TIME, out_locale)
-        self._BCE_TOKEN = 'BC'
+        self._BCE_TOKEN = BC_TOKEN[lang]
         self._millenium_template = "{millennium}" + MILLENNIUM_TOKEN[lang] + " {era}"
-        self._century_template = "{century}" + CENTURY_TOKEN[lang] + " {era}"
-        self._day_template = "%#d %B %#Y"
-        self._month_template = "%B %#Y"
+        self._century_template = CENTURY_TOKEN[lang]
+        self._day_template = DAY_TEMPLATE.get(lang, "%#d %B %#Y")
+        self._month_template = MONTH_TEMPLATE.get(lang, "%B %#Y")
         self._year_template = "{year} {era}"
 
     def format(self, date: str, precision: int):
@@ -81,7 +96,7 @@ class DateFormatter(ABC):
         return formatted.strip()
 
     def to_human(self, value):
-        return ordinal(value)
+        return ordinal(int(value))
 
 
 class RomanLanguageDateFormatter(DateFormatter):
@@ -89,10 +104,10 @@ class RomanLanguageDateFormatter(DateFormatter):
         return numeral.int2roman(int(value), only_ascii=True)
 
 
-class DateFactory(object):
+class DateFormatterFactory(object):
     @staticmethod
-    def create(lang, locale):
-        if lang == 'en':
-            return DateFormatter(lang, locale)
-        if lang in ['fr', 'it']:
-            return RomanLanguageDateFormatter(lang, locale)
+    def get_formatter(lang, out_locale):
+        if lang in ['en']:
+            return DateFormatter(lang, out_locale)
+        else:
+            return RomanLanguageDateFormatter(lang, out_locale)

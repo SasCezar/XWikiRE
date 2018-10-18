@@ -1,24 +1,25 @@
 import os
 
+from date_parsers import DateFormatterFactory
 from tokenizers import SpacyTokenizer
 
-LANG = "fr"
-EXT_LANG = "french"
-LOCALE = 'fr-FR'
-NUM_WORKERS = 8
-CHUNK_SIZE = 100000
+LANG = 'es'
+LOCALE = 'es-ES'
+
+NUM_WORKERS = 6
+CHUNK_SIZE = 1000
 
 MONGO_IP = "localhost"
 MONGO_PORT = 27017
 DB = "WikiReading"
 WIKIDATA_COLLECTION = "wikidata"
-WIKIPEDIA_COLLECTION = "wikipedia".format(LANG)
-WIKIMERGE_COLLECTION = "test_{}_wikimerge".format(LANG)
-WIKIREADING_COLLECTION = "{}_wikireading".format(LANG)
+WIKIPEDIA_COLLECTION = "{}wiki".format(LANG)
+WIKIMERGE_COLLECTION = "{}wiki_merged".format(LANG)
 
 TOKENIZER = SpacyTokenizer(LANG, disable=['parser', 'ner', 'textcat', 'tagger'])
+DATE_FORMATTER = DateFormatterFactory.get_formatter(lang=LANG, out_locale=LOCALE)
 
-VOCABS_FOLDER = "..\\vocabs"
+VOCABS_FOLDER = "vocabs"
 
 ANSWER_VOCAB_PATH = os.path.join(VOCABS_FOLDER, "answer.vocab")
 DOCUMENT_VOCAB_PATH = os.path.join(VOCABS_FOLDER, "document.vocab")

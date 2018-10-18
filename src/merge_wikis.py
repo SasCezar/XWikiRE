@@ -3,26 +3,29 @@ import logging
 import multiprocessing
 import re
 import sys
+import time
 import traceback
 from functools import partial
 from typing import List, Dict, Set
 
+from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from date_parsers import DateFactory
-
-logger = logging.getLogger(__name__)
-
+from utils import get_chunks
 
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
     'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
-    'it': []
+    'it': ['Note', 'Bibliografia', 'Voci correlate', 'Altri progetti', 'Collegamenti esterni'],
+    'es': ['Véase también', 'Notas', 'Referencias', 'Bibliografía', 'Enlaces externos', 'Notas y referencias']
 }
+
+STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS[config.LANG])))
 
 NO_UNIT = {'label': ''}
 
+BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
 
@@ -137,38 +140,47 @@ def tokenize(document):
     document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
 
-
-def format_text(sections: List, section_titles: List) -> str:
-    result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    result = re.sub("\n{3,}", "\n\n", result)
-    result = re.sub("={2,5}", "", result)
-    result = re.sub("'{2,3}", "", result)
-    return result.strip()
+    for prop in document['properties']:
+        tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
+        document['properties'][prop]['label_sequence'] = tokens
 
 
-def merge(docs, configs):
+def clean_text(text: str) -> str:
+    o = text
+    match = STOP_SECTIONS_RE.search(text)
+    if match and match.start() > 0:
+        text = text[:match.start()].strip()
+    text = re.sub("===?\s[^=]+\s===?\n?", "", text)
+    text = re.sub("\[\d+\]", "", text)
+    text = re.sub("\n{3,}", "\n\n", text)
+    tokens, _, _ = tokenizer.tokenize(text)
+    return text
+
+
+def merge(limit, configs):
+    start_time = time.time()
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
+    wikipedia = db[config.WIKIPEDIA_COLLECTION]
+    wikimerge = db[config.WIKIMERGE_COLLECTION]
 
-    date_formatter = DateFactory.create(config.LANG, config.LOCALE)
+    date_formatter = config.DATE_FORMATTER
     prop_cache = {}
 
     processed_docs = []
-    for page in docs:
+    n = 0
+    # for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+    for page in wikipedia.find({"wikidata_id": "Q1024894"}, {"_id": 0}):
+
         try:
-            wikidata_doc = wikidata.find_one({"id": page['wikibase_item']}, {"_id": 0})
+            wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
             prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
-            uncached_props = clean_wikidata_docs(prop_docs)
-
-            for uncached_prop in uncached_props:
-                tokens, _, _ = tokenizer.tokenize(uncached_prop['label'])
-                uncached_prop['label_sequence'] = tokens
-
-            prop_cache.update(documents_to_dict(uncached_props))
+            uncached_prop = clean_wikidata_docs(prop_docs)
+            prop_cache.update(documents_to_dict(uncached_prop))
 
             object_documents_ids = get_objects_id(wikidata_doc['claims'])
             object_documents = wikidata.find({"id": {"$in": object_documents_ids}}, {"_id": 0})
@@ -203,47 +215,54 @@ def merge(docs, configs):
                         traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
-            merged_document['text'] = page['text']
+            merged_document['text'] = clean_text(page['text'])
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
             tokenize(merged_document)
 
             processed_docs.append(merged_document)
+
+            if len(processed_docs) >= BATCH_WRITE_SIZE:
+                n += len(processed_docs)
+                wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+                processed_docs = []
+
         except:
             traceback.print_exc()
 
-    return processed_docs
+    if processed_docs:
+        wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+        n += len(processed_docs)
+
+    elapsed = int(time.time() - start_time)
+    return n, elapsed
 
 
-def chunkize(sequence, chunksize):
-    res = []
-    for j in range(0, len(sequence), chunksize):
-        chunk = sequence[j:j + chunksize]
-        res.append(chunk)
-
-    return res
-
-
-def merge_wikis(configs):
+def wikimerge(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    wikimerge = db[config.WIKIMERGE_COLLECTION]
     pool = multiprocessing.Pool(config.NUM_WORKERS)
-    wikidocs = list(wikipedia.find({}, {"text": 1, "wikibase_item": 1, "_id": 0}).sort("wikibase_item"))
-    chunks = chunkize(wikidocs, chunksize=1000)
+    wikidocs = list(wikipedia.find({}, {'wikidata_id': 1, '_id': 0}).sort('wikidata_id'))
+    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
     del wikidocs
-    for docs in pool.imap(partial(merge, configs=configs), chunks):
-        wikimerge.insert_many(list(docs), ordered=False, bypass_document_validation=True)
+    start_time = time.time()
+    total = 0
+    for n, elapsed in pool.map(partial(merge, configs=configs), chunks):
+        total += n
+        part = int(time.time() - start_time)
+        logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed), compress(part)))
 
     pool.terminate()
-
+    elapsed = int(time.time() - start_time)
+    logging.info("Processed {} documents in {}".format(total, compress(elapsed)))
     return
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
-    logger.info("Running %s", " ".join(sys.argv))
-    merge_wikis({})
-    logger.info("Completed %s", " ".join(sys.argv[0]))
+
+    logging.info("Running %s", " ".join(sys.argv))
+    wikimerge({})
+    logging.info("Completed %s", " ".join(sys.argv))

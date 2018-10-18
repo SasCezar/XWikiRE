@@ -2,10 +2,10 @@ import argparse
 import logging
 import multiprocessing
 
+from create_vocabs import build_vocabs
 from create_wikireading import make_wikireading
-from merge_wikis import merge_wikis
+from merge_wikis import wikimerge
 from pos_tagger import export_for_pos
-from vocabs import build_vocabs
 
 MERGE = "merge"
 BUILD = "build"
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.subparser == MERGE:
-        merge_wikis()
+        wikimerge()
 
     if args.subparser == EXTRACT:
         export_for_pos()
@@ -38,4 +38,4 @@ if __name__ == '__main__':
         build_vocabs()
 
     if args.subparser == BUILD:
-        make_wikireading({})
+        make_wikireading()

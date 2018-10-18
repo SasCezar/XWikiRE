@@ -1,19 +1,12 @@
 import collections
-import logging
-import multiprocessing
-import re
-import sys
+import multiprocessing as mp
 import traceback
-from functools import partial
 from typing import List, Dict, Set
 
 from pymongo import MongoClient
 
 import config
-from date_parsers import DateFactory
-
-logger = logging.getLogger(__name__)
-
+from utils import find_full_matches, find_matches, get_chunks
 
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
@@ -23,6 +16,7 @@ STOP_SECTIONS = {
 
 NO_UNIT = {'label': ''}
 
+BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
 
@@ -132,40 +126,85 @@ def tokenize(document):
     article_text = document['text']
     tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
     document['string_sequence'] = tokens
+    tokens, _, _ = tokenizer.tokenize(article_text)
+    document['title_sequence'] = tokens
     document['break_levels'] = break_levels
     document['pos_tagger_sequence'] = pos_tagger_tokens
     document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
 
+    for prop in document['properties']:
+        tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
+        document['properties'][prop]['label_sequence'] = tokens
 
-def format_text(sections: List, section_titles: List) -> str:
-    result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    return result.strip()
+
+def distant_supervision(answer_sequence, entity_sequence, text_sequence, sentence_breaks):
+    for start, end in zip([0] + sentence_breaks, sentence_breaks):
+        sentence = text_sequence[start:end]
+        # TODO If want to add aliases Cross product between aliases of answer and entity, then ANY for if statement
+        if answer_sequence in sentence and entity_sequence in sentence:
+            return start, end
+
+    return False
 
 
-def merge(docs, configs):
+def extract_omer(page):
+    omer_doc = {"key": page['id'], "break_levels": page['break_levels'],
+                "string_sequence": page['string_sequence'], "paragraph_breaks": page['paragraph_breaks'],
+                "sentence_breaks": page['sentence_breaks'], "text": page['text'],
+                "entity_sequence": page['title_sequence'], "entity": page['title']}
+
+    for prop in page['facts']:
+        question = page['properties'][prop]
+        omer_doc['question_string_sequence'] = question['label_sequence']
+        answer_string_sequence = []
+        answer_breaks = []
+        raw_answers = []
+        full_match_answer_location = []
+        answer_location = []
+        for fact in page['facts'][prop]:
+            if answer_string_sequence:
+                answer_breaks.append(len(answer_string_sequence))
+            raw_answers.append(fact['value'])
+            answer_sequence = fact['value_sequence']
+            answer_string_sequence += answer_sequence
+            full_match_answer_location.append(
+                find_full_matches(omer_doc["string_sequence"], answer_sequence))
+            answer_location.append(find_matches(omer_doc["string_sequence"], answer_sequence))
+
+            indexes = distant_supervision(answer_sequence, omer_doc['entity_sequence'],
+                                          omer_doc['string_sequence'], omer_doc['sentence_breaks'])
+
+        omer_doc['answer_string_sequence'] = answer_string_sequence
+        omer_doc['raw_answer_ids'] = raw_answers
+        omer_doc['answer_breaks'] = answer_breaks
+        omer_doc['full_match_answer_location'] = full_match_answer_location
+
+    return
+
+
+def merge_wikis(args):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
+    wikipedia = db[config.WIKIPEDIA_COLLECTION]
+    wikimerge = db[config.WIKIMERGE_COLLECTION]
+    omermerge = db[config.OMERWIKI_COLLECTION]
 
-    date_formatter = DateFactory.create(config.LANG, config.LOCALE)
+    date_formatter = config.DATE_FORMATTER
     prop_cache = {}
 
     processed_docs = []
-    for page in docs:
+    omer_processed = []
+    for page in wikipedia.find({"wikidata_id": {"$gte": args[0], "$lte": args[1]}}, {"_id": 0}):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
             properties_ids = get_properties_ids(wikidata_doc['claims'])
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
             prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
-            uncached_props = clean_wikidata_docs(prop_docs)
-
-            for uncached_prop in uncached_props:
-                tokens, _, _ = tokenizer.tokenize(uncached_prop['label'])
-                uncached_prop['label_sequence'] = tokens
-
-            prop_cache.update(documents_to_dict(uncached_props))
+            uncached_prop = clean_wikidata_docs(prop_docs)
+            prop_cache.update(documents_to_dict(uncached_prop))
 
             object_documents_ids = get_objects_id(wikidata_doc['claims'])
             object_documents = wikidata.find({"id": {"$in": object_documents_ids}}, {"_id": 0})
@@ -200,47 +239,51 @@ def merge(docs, configs):
                         traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
-            merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
+            merged_document['text'] = page['text']
+            merged_document['title'] = page['title']
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
             tokenize(merged_document)
 
             processed_docs.append(merged_document)
+
+            omer_document = extract_omer(merged_document)
+
+            omer_processed += omer_document
+
+            if len(processed_docs) >= BATCH_WRITE_SIZE:
+                wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
+                omermerge.insert_many(omer_processed, ordered=False, bypass_document_validation=True)
+                processed_docs = []
+                omer_processed = []
+
+
         except:
             traceback.print_exc()
 
-    return processed_docs
-
-
-def chunkize(sequence, chunksize):
-    res = []
-    for j in range(0, len(sequence), chunksize):
-        chunk = sequence[j:j + chunksize]
-        res.append(chunk)
-
-    return res
-
-
-def merge_wikis(configs):
-    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
-    db = client[config.DB]
-    wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    wikimerge = db[config.WIKIMERGE_COLLECTION]
-    pool = multiprocessing.Pool(config.NUM_WORKERS)
-    wikidocs = list(wikipedia.find({}, {"_id": 0}).sort("wikidata_id"))
-    chunks = chunkize(wikidocs, chunksize=1000)
-    del wikidocs
-    for docs in pool.imap(partial(merge, configs=configs), chunks):
-        wikimerge.insert_many(list(docs), ordered=False, bypass_document_validation=True)
-
-    pool.terminate()
+    if processed_docs:
+        wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
 
     return
 
 
+def wikimerge():
+    chunk_size = config.CHUNK_SIZE
+    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
+    db = client[config.DB]
+    wikipedia = db[config.WIKIPEDIA_COLLECTION]
+    documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
+    client.close()
+    if config.NUM_WORKERS == 1:
+        for limit in get_chunks(documents_id, chunk_size, 'wikidata_id'):
+            merge_wikis(limit)
+    else:
+        pool = mp.Pool(processes=config.NUM_WORKERS)
+        pool.map(merge_wikis, get_chunks(documents_id, chunk_size, 'wikidata_id'))
+        pool.close()
+        pool.join()
+
+
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
-    logger.info("Running %s", " ".join(sys.argv))
-    merge_wikis({})
-    logger.info("Completed %s", " ".join(sys.argv[0]))
+    wikimerge()

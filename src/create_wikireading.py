@@ -1,44 +1,31 @@
-import multiprocessing
-from functools import partial
+import multiprocessing as mp
 
 from pymongo import MongoClient
 
 import config
-from vocabs import load_vocab
+from create_vocabs import load_vocab
+from utils import find_full_matches, find_matches, get_chunks
 
 
-def find_sub_list(sublist, list):
-    results = []
-    sll = len(sublist)
-    for ind in (i for i, e in enumerate(list) if e == sublist[0]):
-        if list[ind:ind + sll] == sublist:
-            results.append(range(ind, ind + sll))
+def build(limit):
+    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
+    db = client[config.DB]
+    wikimerge = db[config.WIKIMERGE_COLLECTION]
 
-    return results
+    answer_vocab = load_vocab(config.ANSWER_VOCAB_PATH)
+    document_vocab = load_vocab(config.DOCUMENT_VOCAB_PATH)
+    raw_answers_vocab = load_vocab(config.RAW_ANSWER_VOCAB_PATH)
+    # type_vocab = load_vocab(config.TYPE_VOCAB_PATH)
 
+    for page in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+        wikireading_doc = {"key": page['id'], "break_levels": page['break_levels'],
+                           "string_sequence": page['string_sequence'], "paragraph_breaks": page['paragraph_breaks'],
+                           "sentence_breaks": page['sentence_breaks'], "text": page['text']}
 
-def find_full_matches(sequence, answer):
-    return find_sub_list(answer, sequence)
-
-
-def find_matches(sequence, answer):
-    elements = set(answer)
-    return [index for index, value in enumerate(sequence) if value in elements]
-
-
-def build(docs, document_vocab, type_vocab, answer_vocab, raw_answers_vocab):
-    processed_docs = []
-    for page in docs:
-        wikireading_doc = {"key": page['id'],
-                           "break_levels": page['break_levels'],
-                           "string_sequence": page['string_sequence'],
-                           "paragraph_breaks": page['paragraph_breaks'],
-                           "sentence_breaks": page['sentence_breaks'],
-                           "text": page['text'],
-                           "pos_tags": page['pos_tags'],
-                           'type_sequence': [type_vocab[pos] for pos in page['pos_tags']],
-                           'document_sequence': [document_vocab[word] for word in page['string_sequence']]
-                           }
+        # TODO Add POS Source
+        # pos_sequence = poscoll.find_one({"id": page['id']}, {"_id": 0})
+        # wikireading_doc['type_sequence'] = [type_vocab[pos] for pos in pos_sequence]
+        wikireading_doc['document_sequence'] = [document_vocab[word] for word in wikireading_doc['string_sequence']]
 
         for prop in page['facts']:
             question = page['properties'][prop]
@@ -66,37 +53,15 @@ def build(docs, document_vocab, type_vocab, answer_vocab, raw_answers_vocab):
             wikireading_doc['answer_breaks'] = answer_breaks
             wikireading_doc['full_match_answer_location'] = full_match_answer_location
 
-            processed_docs.append(wikireading_doc)
 
-    return processed_docs
-
-
-def chunkize(sequence, chunksize):
-    res = []
-    for j in range(0, len(sequence), chunksize):
-        chunk = sequence[j:j + chunksize]
-        res.append(chunk)
-
-    return res
-
-
-def make_wikireading(configs):
+def make_wikireading():
+    chunk_size = config.CHUNK_SIZE
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
-    wikireading = db[config.WIKIREADING_COLLECTION]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
-    pool = multiprocessing.Pool(config.NUM_WORKERS)
-    wikidocs = list(wikimerge.find({}, {"_id": 0}).sort("id"))
-    chunks = chunkize(wikidocs, chunksize=1000)
-    del wikidocs
-    answer_vocab = load_vocab(config.ANSWER_VOCAB_PATH)
-    document_vocab = load_vocab(config.DOCUMENT_VOCAB_PATH)
-    raw_answers_vocab = load_vocab(config.RAW_ANSWER_VOCAB_PATH)
-    type_vocab = load_vocab(config.TYPE_VOCAB_PATH)
-    for docs in pool.imap(partial(build, answer_vocab=answer_vocab, document_vocab=document_vocab,
-                                  raw_answers_vocab=raw_answers_vocab, type_vocab=type_vocab), chunks):
-        wikireading.insert_many(list(docs), ordered=False, bypass_document_validation=True)
-
-    pool.terminate()
-
-    return
+    documents_id = list(wikimerge.find({}, {"id": 1, "_id": 0}).sort("id"))
+    client.close()
+    pool = mp.Pool(processes=config.NUM_WORKERS)
+    pool.map(build, get_chunks(documents_id, chunk_size, 'id'))
+    pool.close()
+    pool.join()
