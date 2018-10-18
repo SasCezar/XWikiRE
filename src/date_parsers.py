@@ -33,7 +33,7 @@ MONTH_TEMPLATE = {
 }
 
 DAY_TEMPLATE = {
-    'es': "%#d de %D de %#Y"
+    'es': "%#d de %B de %#Y"
 }
 
 
@@ -96,7 +96,7 @@ class DateFormatter(ABC):
         return formatted.strip()
 
     def to_human(self, value):
-        return ordinal(value)
+        return ordinal(int(value))
 
 
 class RomanLanguageDateFormatter(DateFormatter):

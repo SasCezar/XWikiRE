@@ -146,12 +146,14 @@ def tokenize(document):
 
 
 def clean_text(text: str) -> str:
+    o = text
     match = STOP_SECTIONS_RE.search(text)
     if match and match.start() > 0:
         text = text[:match.start()].strip()
-    text = re.sub("===?\s[^=]+\s===?\n", "", text)
+    text = re.sub("===?\s[^=]+\s===?\n?", "", text)
     text = re.sub("\[\d+\]", "", text)
     text = re.sub("\n{3,}", "\n\n", text)
+    tokens, _, _ = tokenizer.tokenize(text)
     return text
 
 
@@ -168,7 +170,9 @@ def merge(limit, configs):
 
     processed_docs = []
     n = 0
-    for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+    # for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+    for page in wikipedia.find({"wikidata_id": "Q1024894"}, {"_id": 0}):
+
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
@@ -229,9 +233,9 @@ def merge(limit, configs):
 
     if processed_docs:
         wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
-        n += processed_docs
+        n += len(processed_docs)
 
-    elapsed = start_time - time.time()
+    elapsed = int(time.time() - start_time)
     return n, elapsed
 
 
@@ -240,19 +244,25 @@ def wikimerge(configs):
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     pool = multiprocessing.Pool(config.NUM_WORKERS)
-    wikidocs = list(wikipedia.find({}, {'wikibase_id': 1, '_id': 0}).sort('wikibase_id'))
-    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikibase_id')
+    wikidocs = list(wikipedia.find({}, {'wikidata_id': 1, '_id': 0}).sort('wikidata_id'))
+    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
     del wikidocs
-    for n, elapsed in pool.imap(partial(merge, configs=configs), chunks):
-        logging.info("Processed {} more documents in {}".format(n, compress(elapsed)))
+    start_time = time.time()
+    total = 0
+    for n, elapsed in pool.map(partial(merge, configs=configs), chunks):
+        total += n
+        part = int(time.time() - start_time)
+        logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed), compress(part)))
 
     pool.terminate()
-
+    elapsed = int(time.time() - start_time)
+    logging.info("Processed {} documents in {}".format(total, compress(elapsed)))
     return
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
 
-    logging.info("running %s", " ".join(sys.argv))
+    logging.info("Running %s", " ".join(sys.argv))
     wikimerge({})
+    logging.info("Completed %s", " ".join(sys.argv))
