@@ -75,7 +75,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "janvier 20 J.-C")
 
     def test_month_italian(self):
-        formatter = DateFormatter(lang='it', out_locale='it-IT')
+        formatter = RomanLanguageDateFormatter(lang='it', out_locale='it-IT')
         precision = 10
 
         date = "+00000001920-01-01T00:00:00Z"
@@ -85,6 +85,31 @@ class TestFormatterMethods(unittest.TestCase):
         date = "-000000020-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "gennaio 20 a.C.")
+
+    def test_day_french(self):
+        formatter = RomanLanguageDateFormatter(lang='fr', out_locale='fr-FR')
+        precision = 11
+
+        date = "+00000001920-01-02T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "2 janvier 1920")
+
+        date = "-000000020-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "1er janvier 20 J.-C")
+
+    def test_day_italian(self):
+
+        formatter = RomanLanguageDateFormatter(lang='it', out_locale='it-IT')
+        precision = 11
+
+        date = "+00000001920-01-02T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "2 gennaio 1920")
+
+        date = "-000000020-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "1° gennaio 20 a.C.")
 
     def test_month_german(self):
         formatter = DateFormatter(lang='de', out_locale='de-DE')

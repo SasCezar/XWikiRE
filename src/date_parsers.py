@@ -1,11 +1,10 @@
 import datetime
+import locale
 from abc import ABC
 
 import numeral
-from natural.number import ordinal
 from dateutil.parser import parse
-
-import locale
+from natural.number import ordinal
 
 MILLENNIUM_TOKEN = {
     'en': '{millennium} millennium {era}',
@@ -38,6 +37,13 @@ MONTH_TEMPLATE = {
 DAY_TEMPLATE = {
     'es': "%#d de %B de %#Y",
     'de': "%#d. %B %#Y",
+    'it': "%#d{suff} %B %#Y",
+    'fr': "%#d{suff} %B %#Y"
+}
+
+DAY_SUFFIX = {
+    'it': {1: '°'},
+    'fr': {1: 'er'}
 }
 
 
@@ -59,6 +65,7 @@ class DateFormatter(ABC):
         self._day_template = DAY_TEMPLATE.get(lang, "%#d %B %#Y")
         self._month_template = MONTH_TEMPLATE.get(lang, "%B %#Y")
         self._year_template = "{year} {era}"
+        self._day_suffix = DAY_SUFFIX.get(lang, False)
 
     def format(self, date: str, precision: int):
         if date.startswith("-"):
@@ -97,6 +104,13 @@ class DateFormatter(ABC):
     def _parse_day(self, date, era=""):
         date = parse(date)
         formatted = date.strftime(self._day_template) + " " + era
+        if self._day_suffix:
+            if date.day in self._day_suffix:
+                suff = self._day_suffix[date.day]
+            else:
+                suff = ''
+            formatted = formatted.format(suff=suff)
+
         return formatted.strip()
 
     def to_human(self, value):
