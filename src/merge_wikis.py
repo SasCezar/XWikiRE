@@ -171,9 +171,7 @@ def merge(limit, configs):
 
     processed_docs = []
     n = 0
-    # for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
-    for page in wikipedia.find({"wikidata_id": "Q1024894"}, {"_id": 0}):
-
+    for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
