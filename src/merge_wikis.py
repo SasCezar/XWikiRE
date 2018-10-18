@@ -243,12 +243,12 @@ def wikimerge(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
-    pool = multiprocessing.Pool(config.NUM_WORKERS)
     wikidocs = list(wikipedia.find({}, {'wikidata_id': 1, '_id': 0}).sort('wikidata_id'))
-    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
     del wikidocs
     start_time = time.time()
     total = 0
+    pool = multiprocessing.Pool(config.NUM_WORKERS)
+    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
     for n, elapsed in pool.map(partial(merge, configs=configs), chunks):
         total += n
         part = int(time.time() - start_time)

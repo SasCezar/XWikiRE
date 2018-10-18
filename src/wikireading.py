@@ -3,7 +3,7 @@ import logging
 import multiprocessing
 
 from create_vocabs import build_vocabs
-from create_wikireading import make_wikireading
+from build_wikireading import make_wikireading
 from merge_wikis import wikimerge
 from pos_tagger import export_for_pos
 
@@ -29,7 +29,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     if args.subparser == MERGE:
-        wikimerge()
+        wikimerge({})
 
     if args.subparser == EXTRACT:
         export_for_pos()

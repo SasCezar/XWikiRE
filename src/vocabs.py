@@ -34,8 +34,10 @@ def build_document_vocab(collection, out_path):
     for doc in texts:
         tokens = doc[source]
         word_count.update(tokens)
-        for claim in doc['claims']:
-            word_count.update(tokens)
+        for prop_id in doc['facts']:
+            for fact in doc['facts'][prop_id]:
+                tokens = fact['value_sequence']
+                word_count.update(tokens)
 
     total = 0
     for key in word_count:
@@ -93,6 +95,11 @@ def build_char_vocab(collection, out_path):
     char_count = Counter()
     for doc in texts:
         char_count.update(list(doc['text']))
+        for prop in doc['facts']:
+            prop_label = doc['properties'][prop]['label']
+            fact_label = doc['facts'][prop]['value']
+            char_count.update(list(prop_label))
+            char_count.update(list(fact_label))
 
     total = 0
     for key in char_count:

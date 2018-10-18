@@ -1,9 +1,13 @@
-import multiprocessing as mp
+import logging
+import multiprocessing
+import time
+from functools import partial
 
+from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from create_vocabs import load_vocab
+from vocabs import load_vocab
 from utils import find_full_matches, find_matches, get_chunks
 
 
@@ -54,14 +58,24 @@ def build(limit):
             wikireading_doc['full_match_answer_location'] = full_match_answer_location
 
 
-def make_wikireading():
-    chunk_size = config.CHUNK_SIZE
+def make_wikireading(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
     documents_id = list(wikimerge.find({}, {"id": 1, "_id": 0}).sort("id"))
     client.close()
-    pool = mp.Pool(processes=config.NUM_WORKERS)
-    pool.map(build, get_chunks(documents_id, chunk_size, 'id'))
-    pool.close()
-    pool.join()
+    start_time = time.time()
+    total = 0
+    pool = multiprocessing.Pool(config.NUM_WORKERS)
+    chunks = get_chunks(documents_id, config.CHUNK_SIZE, 'wikidata_id')
+    for n, elapsed in pool.map(partial(build, configs=configs), chunks):
+        total += n
+        part = int(time.time() - start_time)
+        logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total,
+                                                                                           compress(elapsed),
+                                                                                           compress(part)))
+
+    pool.terminate()
+    elapsed = int(time.time() - start_time)
+    logging.info("Processed {} documents in {}".format(total, compress(elapsed)))
+    return
