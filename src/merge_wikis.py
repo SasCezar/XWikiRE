@@ -5,6 +5,7 @@ import multiprocessing as mp
 import re
 import sys
 import traceback
+from multiprocessing import freeze_support
 from typing import List, Dict, Set
 
 from pymongo import MongoClient
@@ -14,20 +15,13 @@ import config
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
     'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
-    'it': ['Note', 'Bibliografia', 'Voci correlate', 'Altri progetti', 'Collegamenti esterni']
+    'it': ['Note', 'Bibliografia', 'Voci correlate', 'Altri progetti', 'Collegamenti esterni'],
+    'es': ['Véase también', 'Notas', 'Referencias', 'Bibliografía', 'Enlaces externos', 'Notas y referencias']
 }
 
-STOP_SECTIONS_RE = {
-    'en': re.compile("===\s({})\s===".format('|'.join(STOP_SECTIONS['en']))),
-    'fr': re.compile("===\s({})\s===".format('|'.join(STOP_SECTIONS['fr']))),
-    'it': re.compile("===\s({})\s===".format('|'.join(STOP_SECTIONS['it'])))
-}
+STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS[config.LANG])))
 
 NO_UNIT = {'label': ''}
-
-FILE_RE = re.compile(
-    "(\.(AVI|CSS|DOC|EXE|GIF|SVG|BMP|HTML|JPG|JPEG|MID|MIDI|MP3|MPG|MPEG|MOV|QT|PDF|PNG|RAM|RAR|TIFF|TXT|WAV|ZIP))$",
-    re.IGNORECASE)
 
 BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
@@ -149,22 +143,17 @@ def tokenize(document):
         document['properties'][prop]['label_sequence'] = tokens
 
 
-def format_text(sections: List, section_titles: List) -> str:
-    result = "".join((text for title, text in zip(section_titles, sections) if title not in STOP_SECTIONS))
-    result = re.sub("\n{3,}", "\n\n", result)
-    result = re.sub("={2,5}", "", result)
-    result = re.sub("'{2,3}", "", result)
-    return result.strip()
-
-
 def clean_text(text: str) -> str:
-    clean_index = STOP_SECTIONS_RE[config.LANG].search(text).start()
-    if clean_index > 0:
-        text = text[:clean_index].strip()
+    match = STOP_SECTIONS_RE.search(text)
+    if match and match.start() > 0:
+        text = text[:match.start()].strip()
+    text = re.sub("===?\s[^=]+\s===?\n", "", text)
+    text = re.sub("\[\d+\]", "", text)
+    text = re.sub("\n{3,}", "\n\n", text)
     return text
 
 
-def merge_wikis(args):
+def merge_wikis(limit):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
@@ -175,7 +164,7 @@ def merge_wikis(args):
     prop_cache = {}
 
     processed_docs = []
-    for page in wikipedia.find({"wikidata_id": {"$gte": args[0], "$lte": args[1]}}, {"_id": 0}):
+    for page in wikipedia.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
@@ -218,7 +207,7 @@ def merge_wikis(args):
                         traceback.print_exc()
 
             merged_document = _clean_doc(wikidata_doc)
-            merged_document['text'] = format_text(page['section_texts'], page['section_titles'])
+            merged_document['text'] = clean_text(page['text'])
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = facts
 
@@ -260,21 +249,15 @@ def wikimerge():
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
     client.close()
+    # for chunk in get_chunks(documents_id, chunk_size):
+    #   merge_wikis(())
     pool = mp.Pool(processes=config.NUM_WORKERS)
     pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
-    pool.close()
-    pool.join()
+    pool.terminate()
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
-    parser = argparse.ArgumentParser(description="Merges wikipedia documents with info from wikidata into a single "
-                                                 "MongoDB colletion")
-    parser.add_argument('--lang', help='Language code (i.e. en)', required=True)
-    parser.add_argument('--ext_lang', help='Extended language code (i.e. english)', required=True)
-    parser.add_argument('--locale', help='Locale used for date formatting according to wikipedia style', required=True)
-    args = parser.parse_args()
 
     logging.info("running %s", " ".join(sys.argv))
-    config.set_lang(args.lang, args.ext_lang, args.locale)
     wikimerge()

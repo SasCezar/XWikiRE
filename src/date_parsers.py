@@ -28,6 +28,13 @@ BC_TOKEN = {
     'es': 'a. C.'
 }
 
+MONTH_TEMPLATE = {
+    "es": "%B de %#Y"
+}
+
+DAY_TEMPLATE = {
+    'es': "%#d de %D de %#Y"
+}
 
 class DateFormatter(ABC):
     def __init__(self, lang='en', out_locale="en-US"):
@@ -44,8 +51,8 @@ class DateFormatter(ABC):
         self._BCE_TOKEN = BC_TOKEN[lang]
         self._millenium_template = "{millennium}" + MILLENNIUM_TOKEN[lang] + " {era}"
         self._century_template = CENTURY_TOKEN[lang]
-        self._day_template = "%#d %B %#Y"
-        self._month_template = "%B %#Y"
+        self._day_template = DAY_TEMPLATE.get(lang, "%#d %B %#Y")
+        self._month_template = MONTH_TEMPLATE.get(lang, "%B %#Y")
         self._year_template = "{year} {era}"
 
     def format(self, date: str, precision: int):
