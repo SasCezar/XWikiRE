@@ -113,8 +113,7 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
 
 
 def create_wikibase_fact(document: Dict) -> Dict:
-    tokens, _, _, = tokenizer.tokenize(document['label'])
-    fact = {'value': document['label'], "value_sequence": tokens}
+    fact = {'value': document['label']}
     fact.update(document)
     return fact
 
@@ -122,13 +121,13 @@ def create_wikibase_fact(document: Dict) -> Dict:
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("-") else amount
     value = amount + " " + unit['label']
-    fact = {"value": value.strip(), 'value_sequence': value.split()}
+    fact = {"value": value.strip()}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    fact = {"value": date, 'value_sequence': date.split()}
+    fact = {"value": date}
     return fact
 
 
@@ -145,9 +144,12 @@ def tokenize(document):
         tokens, _, _ = tokenizer.tokenize(document['properties'][prop]['label'])
         document['properties'][prop]['label_sequence'] = tokens
 
+    for prop in document['facts']:
+        tokens, _, _ = tokenizer.tokenize(document['facts'][prop]['label'])
+        document['facts'][prop]['label_sequence'] = tokens
+
 
 def clean_text(text: str) -> str:
-    o = text
     match = STOP_SECTIONS_RE.search(text)
     if match and match.start() > 0:
         text = text[:match.start()].strip()
@@ -231,8 +233,8 @@ def merge(limit, configs):
             traceback.print_exc()
 
     if processed_docs:
-        wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
         n += len(processed_docs)
+        wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
 
     elapsed = int(time.time() - start_time)
     return n, elapsed
