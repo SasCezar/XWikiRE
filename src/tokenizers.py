@@ -20,9 +20,6 @@ class TokenizerI(ABC):
     def tokenize(self, text):
         raise NotImplemented
 
-    def extract_break_levels(self, tokens):
-        raise NotImplemented
-
 
 class SpacyTokenizer(TokenizerI):
     def __init__(self, lang, **kwargs):
@@ -49,7 +46,7 @@ class SpacyTokenizer(TokenizerI):
                     pos_tagger_seq.append(token.text)
                 if token.whitespace_:  # filter out empty strings
                     token_separators += self.BREAK_LEVEL_TOKENS[token.whitespace_]
-                elif i + 1 < len(tokens) and str(tokens[i+1]) not in self.BREAK_LEVEL_TOKENS:
+                elif i + 1 < len(tokens) and str(tokens[i + 1]) not in self.BREAK_LEVEL_TOKENS:
                     token_separators.append(0)
             else:
                 token_separators += self.BREAK_LEVEL_TOKENS[token.text]

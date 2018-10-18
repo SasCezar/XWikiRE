@@ -8,24 +8,27 @@ from dateutil.parser import parse
 import locale
 
 MILLENNIUM_TOKEN = {
-    'en': ' millennium',
-    'fr': 'e millénaire',
-    'it': ' millennio',
-    'es': ' milenio'
+    'en': '{millennium} millennium {era}',
+    'fr': '{millennium}e millénaire {era}',
+    'it': '{millennium} millennio {era}',
+    'es': '{millennium} milenio {era}',
+    'de': '{millennium}. Jahrtausend {era}',
 }
 
 CENTURY_TOKEN = {
     'en': '{century} century {era}',
     'fr': '{century}e siècle {era}',
     'it': '{century} secolo {era}',
-    'es': 'siglo {century} {era}'
+    'es': 'siglo {century} {era}',
+    'de': '{century}. Jahrhundert {era}'
 }
 
 BC_TOKEN = {
     'en': 'BC',
     'fr': 'J.-C',
     'it': 'a.C.',
-    'es': 'a. C.'
+    'es': 'a. C.',
+    'de': 'v. Chr.'
 }
 
 MONTH_TEMPLATE = {
@@ -33,7 +36,8 @@ MONTH_TEMPLATE = {
 }
 
 DAY_TEMPLATE = {
-    'es': "%#d de %B de %#Y"
+    'es': "%#d de %B de %#Y",
+    'de': "%#d. %B %#Y",
 }
 
 
@@ -50,7 +54,7 @@ class DateFormatter(ABC):
 
         locale.setlocale(locale.LC_TIME, out_locale)
         self._BCE_TOKEN = BC_TOKEN[lang]
-        self._millenium_template = "{millennium}" + MILLENNIUM_TOKEN[lang] + " {era}"
+        self._millenium_template = MILLENNIUM_TOKEN[lang]
         self._century_template = CENTURY_TOKEN[lang]
         self._day_template = DAY_TEMPLATE.get(lang, "%#d %B %#Y")
         self._month_template = MONTH_TEMPLATE.get(lang, "%B %#Y")
@@ -96,6 +100,11 @@ class DateFormatter(ABC):
         return formatted.strip()
 
     def to_human(self, value):
+        return int(value)
+
+
+class EnglishDateFormatter(DateFormatter):
+    def to_human(self, value):
         return ordinal(int(value))
 
 
@@ -108,6 +117,8 @@ class DateFormatterFactory(object):
     @staticmethod
     def get_formatter(lang, out_locale):
         if lang in ['en']:
+            return EnglishDateFormatter(lang, out_locale)
+        elif lang in ['de']:
             return DateFormatter(lang, out_locale)
         else:
             return RomanLanguageDateFormatter(lang, out_locale)

@@ -18,6 +18,7 @@ STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
     'fr': ['Notes et références', 'Bibliographie', 'Voir aussi', 'Annexes', 'Références'],
     'it': ['Note', 'Bibliografia', 'Voci correlate', 'Altri progetti', 'Collegamenti esterni'],
+    'de': ['Literatur', 'Siehe auch', 'Weblinks', 'Anmerkungen', 'Einzelnachweise und Anmerkungen', 'Referenzen'],
     'es': ['Véase también', 'Notas', 'Referencias', 'Bibliografía', 'Enlaces externos', 'Notas y referencias']
 }
 

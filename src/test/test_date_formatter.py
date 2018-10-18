@@ -1,11 +1,11 @@
 import unittest
 
-from date_parsers import DateFormatter, RomanLanguageDateFormatter
+from date_parsers import DateFormatter, RomanLanguageDateFormatter, EnglishDateFormatter
 
 
 class TestFormatterMethods(unittest.TestCase):
     def test_millennium(self):
-        formatter = DateFormatter()
+        formatter = EnglishDateFormatter()
         precision = 6
 
         date = "+0000020000-01-01T00:00:00Z"
@@ -17,7 +17,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "3rd millennium BC")
 
     def test_century(self):
-        formatter = DateFormatter()
+        formatter = EnglishDateFormatter()
         precision = 7
 
         date = "+00000001900-01-01T00:00:00Z"
@@ -29,7 +29,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "20th century BC")
 
     def test_year(self):
-        formatter = DateFormatter()
+        formatter = EnglishDateFormatter()
         precision = 9
 
         date = "+00000001920-01-01T00:00:00Z"
@@ -40,7 +40,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "1920 BC")
 
     def test_month(self):
-        formatter = DateFormatter()
+        formatter = EnglishDateFormatter()
         precision = 10
 
         date = "+00000001920-01-00T00:00:00Z"
@@ -52,7 +52,7 @@ class TestFormatterMethods(unittest.TestCase):
         self.assertEquals(formatted, "January 20 BC")
 
     def test_day(self):
-        formatter = DateFormatter()
+        formatter = EnglishDateFormatter()
         precision = 11
 
         date = "+00000001920-01-01T00:00:00Z"
@@ -85,6 +85,42 @@ class TestFormatterMethods(unittest.TestCase):
         date = "-000000020-01-01T00:00:00Z"
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "gennaio 20 a.C.")
+
+    def test_month_german(self):
+        formatter = DateFormatter(lang='de', out_locale='de-DE')
+        precision = 10
+
+        date = "+00000001920-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "Januar 1920")
+
+        date = "-000000020-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "Januar 20 v. Chr.")
+
+    def test_millenium_german(self):
+        formatter = DateFormatter(lang='de', out_locale='de-DE')
+        precision = 6
+
+        date = "+000002000-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "3. Jahrtausend")
+
+        date = "-00000001000-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "2. Jahrtausend v. Chr.")
+
+    def test_century_german(self):
+        formatter = DateFormatter(lang='de', out_locale='de-DE')
+        precision = 7
+
+        date = "+00000200-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "3. Jahrhundert")
+
+        date = "-0000000100-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+        self.assertEquals(formatted, "2. Jahrhundert v. Chr.")
 
 
 class TestRomanFormatterMethods(unittest.TestCase):
