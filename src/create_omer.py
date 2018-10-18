@@ -6,7 +6,7 @@ from typing import List, Dict, Set
 from pymongo import MongoClient
 
 import config
-from utils import find_full_matches, find_matches
+from utils import find_full_matches, find_matches, get_chunks
 
 STOP_SECTIONS = {
     'en': ['See also', 'Notes', 'Further reading', 'External links'],
@@ -268,20 +268,6 @@ def merge_wikis(args):
     return
 
 
-def get_chunks(sequence, chunk_size):
-    """
-    Computes the lower limit and the upper limit of a collection of documents
-    :param sequence:
-    :param chunk_size:
-    :return: The doc id for the lower and upper limits
-    """
-    for j in range(0, len(sequence), chunk_size):
-        chunck = sequence[j:j + chunk_size]
-        lower = chunck[0]['wikidata_id']
-        upper = chunck[-1]['wikidata_id']
-        yield (lower, upper)
-
-
 def wikimerge():
     chunk_size = config.CHUNK_SIZE
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
@@ -290,11 +276,11 @@ def wikimerge():
     documents_id = list(wikipedia.find({}, {"wikidata_id": 1, "_id": 0}).sort("wikidata_id"))
     client.close()
     if config.NUM_WORKERS == 1:
-        for limit in get_chunks(documents_id, chunk_size):
+        for limit in get_chunks(documents_id, chunk_size, 'wikidata_id'):
             merge_wikis(limit)
     else:
         pool = mp.Pool(processes=config.NUM_WORKERS)
-        pool.map(merge_wikis, get_chunks(documents_id, chunk_size))
+        pool.map(merge_wikis, get_chunks(documents_id, chunk_size, 'wikidata_id'))
         pool.close()
         pool.join()
 

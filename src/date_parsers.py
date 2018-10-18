@@ -36,6 +36,7 @@ DAY_TEMPLATE = {
     'es': "%#d de %D de %#Y"
 }
 
+
 class DateFormatter(ABC):
     def __init__(self, lang='en', out_locale="en-US"):
         self._default_datetime = datetime.datetime(1, 1, 1)

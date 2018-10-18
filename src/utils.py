@@ -15,3 +15,17 @@ def find_sub_list(sublist, list):
             results.append(range(ind, ind + sll))
 
     return results
+
+
+def get_chunks(sequence, chunk_size, key):
+    """
+    Computes the lower limit and the upper limit of a collection of documents
+    :param sequence:
+    :param chunk_size:
+    :return: The doc id for the lower and upper limits
+    """
+    for j in range(0, len(sequence), chunk_size):
+        chunck = sequence[j:j + chunk_size]
+        lower = chunck[0][key]
+        upper = chunck[-1][key]
+        yield (lower, upper)
