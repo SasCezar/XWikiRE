@@ -12,6 +12,7 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
+import tokenizers
 from utils import get_chunks
 
 STOP_SECTIONS = {
@@ -112,22 +113,27 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
     return res
 
 
+def create_string_fact(value: str) -> Dict:
+    fact = {"value": value, "type": "value"}
+    return fact
+
+
 def create_wikibase_fact(document: Dict) -> Dict:
-    fact = {'value': document['label']}
+    fact = {'value': document['label'], "type": "wikibase"}
     fact.update(document)
     return fact
 
 
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
-    amount = amount[1:] if amount.startswith("-") else amount
+    amount = amount[1:] if amount.startswith("+") else amount
     value = amount + " " + unit['label']
-    fact = {"value": value.strip()}
+    fact = {"value": value.strip(), "type": "quantity"}
     fact.update(unit)
     return fact
 
 
 def create_time_fact(date: str):
-    fact = {"value": date}
+    fact = {"value": date, "type": "date"}
     return fact
 
 
@@ -139,7 +145,7 @@ def tokenize(document):
     document['label_sequence'] = tokens
     document['break_levels'] = break_levels
     document['pos_tagger_sequence'] = pos_tagger_tokens
-    document['sentence_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 3]
+    document['sentence_breaks'] = [i for i, token in enumerate(tokens) if token in tokenizers.SENTENCE_BREAKS]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
 
     for prop in document['facts']:
@@ -163,9 +169,6 @@ def tokenize_props(props):
     for prop in props:
         tokens, _, _ = tokenizer.tokenize(prop['label'])
         prop['label_sequence'] = tokens
-        # for alias in prop['aliases']:
-        #    tokens, _, _ = tokenizer.tokenize(prop['value'])
-        #    alias['value_sequence'] = tokens
 
 
 def merge(limit, configs):
@@ -201,6 +204,13 @@ def merge(limit, configs):
                 for claim in wikidata_doc['claims'][prop_id]:
                     try:
                         datatype = claim['mainsnak']['datavalue']['type']
+                        if datatype == "string":
+                            string_type = claim['mainsnak']['datatype']
+                            if string_type in {'external-id', 'commonsMedia'}:
+                                continue
+                            value = claim['mainsnak']['datavalue']['value']
+                            fact = create_string_fact(value)
+                            facts[prop_id].append(fact)
                         if datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
                             if d_id in documents_dict:
@@ -227,8 +237,7 @@ def merge(limit, configs):
             merged_document = _clean_doc(wikidata_doc)
             merged_document['text'] = clean_text(page['text'])
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
-            merged_document['facts'] = facts
-
+            merged_document['facts'] = {pid: facts[pid] for pid in facts if pid in merged_document['properties']}
             tokenize(merged_document)
 
             processed_docs.append(merged_document)
