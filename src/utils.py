@@ -17,6 +17,15 @@ def find_sub_list(sublist, list):
     return results
 
 
+def is_sublist(sublist, list):
+    sll = len(sublist)
+    for ind in (i for i, e in enumerate(list) if e == sublist[0]):
+        if list[ind:ind + sll] == sublist:
+            return True
+
+    return False
+
+
 def get_chunks(sequence, chunk_size, key):
     """
     Computes the lower limit and the upper limit of a collection of documents
