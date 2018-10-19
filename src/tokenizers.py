@@ -3,6 +3,7 @@ from typing import List, Tuple
 import spacy
 from abc import ABC
 
+SENTENCE_BREAKS = {'.', '!', '?', '…', ';', ':', '...'}
 
 class TokenizerI(ABC):
 
@@ -14,7 +15,7 @@ class TokenizerI(ABC):
             "\n\n": 4,
         }
 
-        self.SENTENCE_BREAKS = ['.', '!', '?', '…', ';', ':', '...']
+        self.SENTENCE_BREAKS = SENTENCE_BREAKS
 
     def tokenize(self, text):
         raise NotImplemented
