@@ -25,7 +25,7 @@ STOP_SECTIONS = {
 
 STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS[config.LANG])))
 
-NO_UNIT = {'label': ''}
+NO_UNIT = {'label': '', 'id': ''}
 
 BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
@@ -56,7 +56,7 @@ def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
     return clean_docs
 
 
-DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels', 'sitelinks']
+DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'sitelinks']
 
 
 def _clean_doc(doc: Dict) -> Dict:
@@ -66,7 +66,7 @@ def _clean_doc(doc: Dict) -> Dict:
     :return:
     """
     doc['label'] = doc['labels'][config.LANG]['value']
-    doc['aliases'] = doc['aliases'].get(config.LANG, [])
+    doc['aliases'] = doc['aliases']
 
     for key in DOC_CLEAN_KEYS:
         try:
@@ -114,10 +114,12 @@ def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
 
 
 def create_string_fact(value: str) -> Dict:
-    fact = {"value": value, "type": "value"}
+    value = value.strip()
+    fact = {"value": value, "type": "value", "id": value}
     return fact
 
 
+#TODO Check "ID"
 def create_wikibase_fact(document: Dict) -> Dict:
     fact = {'value': document['label'], "type": "wikibase"}
     fact.update(document)
@@ -127,13 +129,14 @@ def create_wikibase_fact(document: Dict) -> Dict:
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("+") else amount
     value = amount + " " + unit['label']
-    fact = {"value": value.strip(), "type": "quantity"}
+    fid = amount + unit['id']
+    fact = {"value": value.strip(), "type": "quantity", "id": fid}
     fact.update(unit)
     return fact
 
 
-def create_time_fact(date: str):
-    fact = {"value": date, "type": "date"}
+def create_time_fact(formatted_date: str, date: str):
+    fact = {"value": formatted_date, "type": "date", "id": date}
     return fact
 
 
@@ -211,7 +214,7 @@ def merge(limit, configs):
                             value = claim['mainsnak']['datavalue']['value']
                             fact = create_string_fact(value)
                             facts[prop_id].append(fact)
-                        if datatype == "wikibase-entityid":
+                        elif datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
                             if d_id in documents_dict:
                                 document = documents_dict[d_id]
@@ -227,7 +230,7 @@ def merge(limit, configs):
                             date = claim['mainsnak']['datavalue']['value']['time']
                             precision = claim['mainsnak']['datavalue']['value']['precision']
                             formatted_date = date_formatter.format(date, precision)
-                            fact = create_time_fact(formatted_date)
+                            fact = create_time_fact(formatted_date, date)
                             facts[prop_id].append(fact)
                         else:
                             continue
