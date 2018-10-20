@@ -1,3 +1,4 @@
+import hashlib
 import logging
 import multiprocessing
 import re
@@ -46,6 +47,11 @@ def clean_sentence(sentence):
     return sentence
 
 
+def get_id_for_qa(page_id, prop_id, answer_id):
+    unique_str = " ".join([page_id, prop_id, answer_id])
+    return hashlib.sha1(unique_str.encode("utf-8")).hexdigest()
+
+
 def build(limit, configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
@@ -74,7 +80,8 @@ def build(limit, configs):
                 start, end = match_index
                 sentence = rebuild_sentence(start, end, omer_doc['string_sequence'], omer_doc['break_levels'])
                 sentence = clean_sentence(sentence)
-                qa = (question['label'], sentence, fact['value'])
+                qa = {"question": question['label'], "sentence": sentence, "answer": fact['value'],
+                      "id": get_id_for_qa(page['id'], prop, fact['id'])}
 
                 omer_doc['QA'][prop].append(qa)
 
