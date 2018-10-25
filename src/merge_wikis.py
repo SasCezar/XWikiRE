@@ -6,7 +6,7 @@ import sys
 import time
 import traceback
 from functools import partial
-from typing import List, Dict, Set
+from typing import List, Dict
 
 from natural.date import compress
 from pymongo import MongoClient
@@ -54,7 +54,9 @@ def _clean_doc(doc: Dict) -> Dict:
     :return:
     """
     doc['label'] = doc['labels'][config.LANG]['value']
-    doc['aliases'] = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
+    aliases = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
+
+    doc['aliases'] = [alias['value'] for alias in aliases]
 
     for key in DOC_CLEAN_KEYS:
         try:
@@ -134,7 +136,7 @@ def tokenize(document):
     document['string_sequence'] = tokens
     document['break_levels'] = break_levels
     document['pos_tagger_sequence'] = pos_tagger_tokens
-    document['sentence_breaks'] = [i for i, token in enumerate(tokens) if token in tokenizers.SENTENCE_BREAKS]
+    document['sentence_breaks'] = [i for i, token in enumerate(tokens) if token.strip() in tokenizers.SENTENCE_BREAKS]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
 
     tokens, _, _ = tokenizer.tokenize(document['label'])

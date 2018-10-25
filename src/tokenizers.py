@@ -1,9 +1,10 @@
+from abc import ABC
 from typing import List, Tuple
 
 import spacy
-from abc import ABC
 
-SENTENCE_BREAKS = {'.', '!', '?', '…', ';', ':', '...'}
+SENTENCE_BREAKS = {'.', '!', '?', '…', '...'}
+
 
 class TokenizerI(ABC):
 
@@ -28,7 +29,7 @@ class SpacyTokenizer(TokenizerI):
 
     def tokenize(self, text: str) -> Tuple[List[str], List[int], List[str]]:
         doc = self._tokenizer(text)
-        filtered_tokens = [token.text for token in doc if token.text not in self.BREAK_LEVEL_TOKENS]
+        filtered_tokens = [token.text.strip() for token in doc if token.text not in self.BREAK_LEVEL_TOKENS]
         break_levels = self._get_break_levels(doc)
         pos_tagger_seq = []
         for token in filtered_tokens:
