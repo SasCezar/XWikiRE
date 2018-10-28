@@ -2,8 +2,10 @@ from typing import List, Tuple
 
 import spacy
 from abc import ABC
+from stanfordcorenlp import StanfordCoreNLP
 
 SENTENCE_BREAKS = {'.', '!', '?', '…', ';', ':', '...'}
+
 
 class TokenizerI(ABC):
 
@@ -56,3 +58,12 @@ class SpacyTokenizer(TokenizerI):
                 token_separators.append(separator)
 
         return token_separators
+
+
+class StanfordTokenizer(TokenizerI):
+    def __init__(self, host='http://localhost', port=9000):
+        super().__init__()
+        self.nlp = StanfordCoreNLP(host, port=port, timeout=30000)
+
+    def tokenize(self, text):
+        return self.nlp.word_tokenize(text)
