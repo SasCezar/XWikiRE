@@ -80,6 +80,22 @@ def create_negatives(qas):
     return neg_examples
 
 
+PREPOSITIONS = {
+    'it': {
+        'default': 'di',
+        'pattern': "(?P<composed>Di|Del|Dello|Della|Dei|Degli|Delle|Dell')|(?P<article>Il|Lo|La|I|Gli|Le|L')\s?{}"
+    }
+}
+
+
+def get_preposition(text, entity):
+    pattern = PREPOSITIONS[config.LANG]['pattern'].format(entity)
+    match = re.search("", text)
+    if match:
+        return match.group(0)
+    else:
+        return PREPOSITIONS[config.LANG]['default']
+
 def build(limit, configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
@@ -96,6 +112,8 @@ def build(limit, configs):
                     "sentence_breaks": page['sentence_breaks'], "text": page['text'],
                     "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {}}
 
+        entity_preposition = get_preposition(page['text'], page['label'])
+        omer_doc['preposition'] = entity_preposition
         qas = defaultdict(list)
         for prop in page['facts']:
             question = page['properties'][prop]
