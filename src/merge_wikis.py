@@ -6,7 +6,7 @@ import sys
 import time
 import traceback
 from functools import partial
-from typing import List, Dict, Set
+from typing import List, Dict
 
 from natural.date import compress
 from pymongo import MongoClient
@@ -31,32 +31,20 @@ BATCH_WRITE_SIZE = 500
 tokenizer = config.TOKENIZER
 
 
-def get_properties_ids(claims: Dict) -> Set:
-    """
-    Returns a set of properties keys
-    :param claims:
-    :return:
-    """
-    return set(claims.keys())
-
-
 def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
     """
     Cleans the documents in docs lists
     :param docs:
     :return:
     """
-    clean_docs = []
     for doc in docs:
         try:
-            clean_doc = _clean_doc(doc)
-            clean_docs.append(clean_doc)
+            yield _clean_doc(doc)
         except:
             continue
-    return clean_docs
 
 
-DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'sitelinks']
+DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels', 'sitelinks']
 
 
 def _clean_doc(doc: Dict) -> Dict:
@@ -66,7 +54,9 @@ def _clean_doc(doc: Dict) -> Dict:
     :return:
     """
     doc['label'] = doc['labels'][config.LANG]['value']
-    doc['aliases'] = doc['aliases']
+    aliases = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
+
+    doc['aliases'] = [alias['value'] for alias in aliases]
 
     for key in DOC_CLEAN_KEYS:
         try:
@@ -144,12 +134,13 @@ def tokenize(document):
     article_text = document['text']
     tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
     document['string_sequence'] = tokens
-    tokens, _, _ = tokenizer.tokenize(document['label'])
-    document['label_sequence'] = tokens
     document['break_levels'] = break_levels
     document['pos_tagger_sequence'] = pos_tagger_tokens
-    document['sentence_breaks'] = [i for i, token in enumerate(tokens) if token in tokenizers.SENTENCE_BREAKS]
+    document['sentence_breaks'] = [i for i, token in enumerate(tokens) if token.strip() in tokenizers.SENTENCE_BREAKS]
     document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
+
+    tokens, _, _ = tokenizer.tokenize(document['label'])
+    document['label_sequence'] = tokens
 
     for prop in document['facts']:
         for fact in document['facts'][prop]:
@@ -191,12 +182,13 @@ def merge(limit, configs):
         try:
             wikidata_doc = wikidata.find_one({"id": page['wikidata_id']}, {"_id": 0})
 
-            properties_ids = get_properties_ids(wikidata_doc['claims'])
+            properties_ids = set(wikidata_doc['claims'].keys())
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
-            prop_docs = wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0})
-            uncached_prop = clean_wikidata_docs(prop_docs)
+            prop_docs = list(wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0}))
+            uncached_prop = list(clean_wikidata_docs(prop_docs))
             tokenize_props(uncached_prop)
-            prop_cache.update(documents_to_dict(uncached_prop))
+            list_prop = documents_to_dict(uncached_prop)
+            prop_cache.update(list_prop)
 
             object_documents_ids = get_objects_id(wikidata_doc['claims'])
             object_documents = wikidata.find({"id": {"$in": object_documents_ids}}, {"_id": 0})
@@ -240,7 +232,7 @@ def merge(limit, configs):
             merged_document = _clean_doc(wikidata_doc)
             merged_document['text'] = clean_text(page['text'])
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
-            merged_document['facts'] = {pid: facts[pid] for pid in facts if pid in merged_document['properties']}
+            merged_document['facts'] = {pid: facts[pid] for pid in facts if pid in prop_cache}
             tokenize(merged_document)
 
             processed_docs.append(merged_document)
@@ -270,14 +262,19 @@ def wikimerge(configs):
     del wikidocs
     start_time = time.time()
     total = 0
-    pool = multiprocessing.Pool(config.NUM_WORKERS)
-    for n, elapsed in pool.map(partial(merge, configs=configs), chunks):
-        total += n
-        part = int(time.time() - start_time)
-        logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed),
-                                                                                           compress(part)))
 
-    pool.terminate()
+    if config.NUM_WORKERS == 1:
+        for chunk in chunks:
+            merge(chunk, {})
+    else:
+        pool = multiprocessing.Pool(config.NUM_WORKERS)
+        for n, elapsed in pool.imap(partial(merge, configs=configs), chunks):
+            total += n
+            part = int(time.time() - start_time)
+            logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed),
+                                                                                               compress(part)))
+
+        pool.terminate()
     elapsed = int(time.time() - start_time)
     logging.info("Processed {} documents in {}".format(total, compress(elapsed)))
     return
