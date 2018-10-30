@@ -10,12 +10,12 @@ class ArticleExtractorI(ABC):
     def extract(self, text, entity):
         article = ''
         pattern = self._re_template.format("")
-        match = re.search(pattern, entity, re.IGNORECASE)
+        match = re.search("^" + pattern, entity, re.IGNORECASE)
         if match:
             article = match.group('article')
             return article
 
-        pattern = self._re_template.format(entity)
+        pattern = self._re_template.format(re.escape(entity))
         match = re.search(pattern, text, re.IGNORECASE)
         if match:
             article = match.group('article')

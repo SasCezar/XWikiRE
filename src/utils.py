@@ -19,10 +19,14 @@ def find_sub_list(sublist, list):
 
 def is_sublist(sublist, list):
     sll = len(sublist)
-    for ind in (i for i, e in enumerate(list) if e == sublist[0]):
-        if list[ind:ind + sll] == sublist:
-            return True
-
+    try:
+        for ind in (i for i, e in enumerate(list) if e == sublist[0]):
+            if list[ind:ind + sll] == sublist:
+                return True
+    except IndexError:
+        print(sublist)
+        print(list)
+        raise
     return False
 
 

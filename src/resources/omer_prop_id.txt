@@ -1,0 +1,120 @@
+P102	member of political party
+P1027	conferred by
+P103	native language
+P1040	film editor
+P105	taxon rank
+P1050	medical condition
+P1057	chromosome
+P106	occupation
+P108	employer
+P1080	from fictional universe
+P110	illustrator
+P113	airline hub
+P115	home venue
+P118	league
+P119	place of burial
+P1196	manner of death
+P123	publisher
+P1303	instrument
+P131	located in the administrative territorial entity
+P1344	participant of
+P1366	replaced by
+P138	named after
+P1399	convicted of
+P1408	licensed to broadcast to
+P141	IUCN conservation status
+P1411	nominated for
+P144	based on
+P1441	present in work
+P1462	standards body
+P149	architectural style
+P159	headquarters location
+P161	cast member
+P1619	date of official opening
+P166	award received
+P17	country
+P170	creator
+P171	parent taxon
+P175	performer
+P176	manufacturer
+P177	crosses
+P178	developer
+P179	series
+P186	material used
+P19	place of birth
+P195	collection
+P20	place of death
+P21	sex or gender
+P22	father
+P241	military branch
+P25	mother
+P26	spouse
+P264	record label
+P27	country of citizenship
+P272	production company
+P275	license
+P277	programming language
+P289	vessel class
+P30	continent
+P306	operating system
+P376	located on astronomical body
+P39	position held
+P40	child
+P403	mouth of the watercourse
+P407	language of work or name
+P410	military rank
+P411	canonization status
+P412	voice type
+P413	position played on team / speciality
+P414	stock exchange
+P449	original network
+P452	industry
+P466	occupant
+P488	chairperson
+P495	country of origin
+P50	author
+P509	cause of death
+P54	member of sports team
+P551	residence
+P569	date of birth
+P57	director
+P570	date of death
+P571	inception
+P577	publication date
+P58	screenwriter
+P580	start time
+P582	end time
+P585	point in time
+P59	constellation
+P6	head of government
+P607	conflict
+P61	discoverer or inventor
+P611	religious order
+P619	time of spacecraft launch
+P641	sport
+P647	drafted by
+P65	site of astronomical discovery
+P674	characters
+P676	lyrics by
+P69	educated at
+P703	found in taxon
+P729	service entry
+P740	location of formation
+P750	distributor
+P81	connecting line
+P84	architect
+P840	narrative location
+P870	instrumentation
+P97	noble title
+P98	editor
+P1056	product
+P112	founder
+P206	located next to body of water
+P287	designer
+P3373	brother
+P53	noble family
+P575	time of discovery
+P576	dissolved or abolished
+P749	parent company
+P9	sister
+P1412	languages spoken or written

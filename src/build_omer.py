@@ -19,6 +19,9 @@ from utils import get_chunks, is_sublist
 
 
 def distant_supervision(answer_sequence, entity_sequence, text_sequence, sentence_breaks):
+    if not answer_sequence:
+        return False
+
     for start, end in zip([-1] + sentence_breaks, sentence_breaks + [len(text_sequence) - 1]):
         sentence = text_sequence[start + 1:end + 1]
         # TODO If want to add aliases Cross product between aliases of answer and entity, then ANY for if statement
@@ -64,7 +67,7 @@ def _create_negative(a, b):
     if a['prop_id'] == b['prop_id']:
         return {}
     if not is_sublist(a['answer_sequence'], b['sentence_sequence']):
-        neg_a = {"question": a['question'], "sentence": b['sentence'], "sentence_sequence": b['sentence_sequence'],
+        neg_a = {"relation": a['relation'], "sentence": b['sentence'], "sentence_sequence": b['sentence_sequence'],
                  "answer": "", "id": get_id_for_qa(a['id'], a['prop_id'], b['id']),
                  "answer_sequence": [], "answer_id": 0, "prop_id": a['prop_id'],
                  "type": a['type'], "example": "negative", "source_a": a['id'], "source_b": b['id']}
@@ -195,7 +198,8 @@ def read_questions_templates(path):
     with open(path, "rt", encoding="utf8") as inf:
         reader = csv.reader(inf, delimiter=",")
         for pid, relation, eng, google, template in reader:
-            templates[pid].append(template)
+            if template.strip():
+                templates[pid].append(template.strip())
     return templates
 
 
@@ -203,7 +207,7 @@ def extract_examples(example_type="negative"):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.OMERMERGE_COLLECTION]
-    documents = wikipedia.find({}, {"QA": 1, "label": 1, "_id": 0})
+    documents = wikipedia.find({}, {"QA": 1, "label": 1, "entity_article": 1, "_id": 0})
 
     omer_props = set()
     with open("C:\\Users\sasce\PycharmProjects\WikiReading\src\\resources\omer_prop_id.txt", "rt",
@@ -214,9 +218,10 @@ def extract_examples(example_type="negative"):
 
     template_filler = TemplateFillerFactory.make_filler(config.LANG)
 
-    question_templates = read_questions_templates("../resources/templates/templates_translation_{}.csv".format(config.LANG))
+    question_templates = read_questions_templates(
+        "resources/templates/templates_translation_{}.csv".format(config.LANG))
 
-    with open("es_qa_neg.txt", "wt", encoding="utf8", newline="") as outf:
+    with open("{}_qa_{}.txt".format(config.LANG, example_type), "wt", encoding="utf8", newline="") as outf:
         writer = csv.writer(outf, delimiter="\t")
         for document in documents:
             for prop in document['QA']:
@@ -228,12 +233,14 @@ def extract_examples(example_type="negative"):
                             question = template_filler.fill(template, document['label'],
                                                             article=document['entity_article'])
                             writer.writerow(
-                                [qa['id'], qa['prop_id'], qa['relation'], template, question, document['label'], qa['sentence'], qa['answer']])
+                                [qa['id'], qa['prop_id'], qa['relation'], template, document['label'], question,
+                                 qa['sentence'], qa['answer']])
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    build_omer({})
+    # build_omer({})
     extract_examples()
+    extract_examples("positive")
     logging.info("Completed %s", " ".join(sys.argv))

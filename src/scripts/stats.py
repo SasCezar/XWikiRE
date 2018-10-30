@@ -34,7 +34,7 @@ def get_prop_count():
                 else:
                     neg_prop_count[prop] += 1
 
-    with open("pos_example_stats.tsv", "wt", encoding="utf8", newline="") as out_pos:
+    with open("{}_pos_example_stats.tsv".format(config.LANG), "wt", encoding="utf8", newline="") as out_pos:
         writer = csv.writer(out_pos, delimiter="\t")
         writer.writerow(["Prop", "Count"])
         prop_count = pos_prop_count.items()
@@ -42,7 +42,7 @@ def get_prop_count():
         for prop, count in prop_count:
             writer.writerow([prop, count])
 
-    with open("neg_example_stats.tsv", "wt", encoding="utf8", newline="") as out_neg:
+    with open("{}_neg_example_stats.tsv".format(config.LANG), "wt", encoding="utf8", newline="") as out_neg:
         writer = csv.writer(out_neg, delimiter="\t")
         writer.writerow(["Prop", "Count"])
         prop_count = neg_prop_count.items()

@@ -68,3 +68,27 @@ Emma Thompson.
         article = extractor.extract(text, "La bella e la bestia")
 
         self.assertEqual("La", article)
+
+    def test_bug(self):
+        extractor = ItalianArticleExtractor()
+        text = """La Online Encyclopedia of Mass Violence (OEMV) è un progetto enciclopedico istituito su iniziativa 
+                   dello storico e politologo francese Jacques Sémelin, direttore di ricerca presso il Centre National de la 
+                   Recherche Scientifique, coadiuvato da un'équipe di docenti universitari provenienti da vari paesi. È stata 
+                   creata con lo scopo di costituire una fonte affidabile di dati riguardo a massacri, genocidi e crimini contro 
+                   non combattenti perpetrati durante il XX secolo o in precedenza. """
+        article = extractor.extract(text, "Online Encyclopedia of Mass Violence")
+
+        self.assertEqual("La", article)
+
+    def test_neg(self):
+        extractor = ItalianArticleExtractor()
+        text = """Four Seasons of Love è il quarto album della cantante statunitense Donna Summer, pubblicato l'11 
+        ottobre 1976 dalle etichette Casablanca.Si tratta di un concept album ispirato alle quattro stagioni 
+        dell'anno.Spring Affair - 8:29 - (Pete Bellotte - Giorgio Moroder - Donna Summer)Summer Fever - 8:06 - (Pete 
+        Bellotte - Giorgio Moroder - Donna Summer)Autumn Changes - 5:28 - (Pete Bellotte - Giorgio Moroder - Donna 
+        Summer)Winter Melody - 6:33 - (Pete Bellotte - Giorgio Moroder - Donna Summer)Spring Reprise - 3:51 - (Pete 
+        Bellotte - Giorgio Moroder - Donna Summer) """
+
+        article = extractor.extract(text, "Four Seasons of Love")
+
+        self.assertEqual("", article)

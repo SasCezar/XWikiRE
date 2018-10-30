@@ -21,7 +21,7 @@ class ItalianTemplateFiller(TemplateFillerI):
     def fill(self, template: str, entity: str, **kwargs):
         article = kwargs['article'].lower()
         if entity.lower().startswith(article):
-            entity = re.sub("\\b" + article + "\s", "", entity, 1, re.IGNORECASE)
+            entity = re.sub("\\b" + article + "\s?", "", entity, 1, re.IGNORECASE)
 
         template = template.replace("XXX", entity)
 
@@ -30,6 +30,9 @@ class ItalianTemplateFiller(TemplateFillerI):
             template = self._reduce(template)
             if '\' ' + entity in template:
                 template = template.replace("\' ", "\'")
+
+        else:
+            template = template.replace("YYY", "")
 
         template = re.sub("\s{2,}", " ", template)
         return template

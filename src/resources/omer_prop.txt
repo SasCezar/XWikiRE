@@ -1,0 +1,120 @@
+country
+date of death
+date of birth
+publication date
+place of birth
+country of citizenship
+performer
+located in the administrative territorial entity
+inception
+occupation
+director
+position played on team / speciality
+sport
+author
+languages spoken or written
+taxon rank
+parent taxon
+member of sports team
+sex or gender
+cast member
+original network
+place of death
+screenwriter
+participant of
+headquarters location
+continent
+native language
+series
+military branch
+conflict
+constellation
+member of political party
+father
+educated at
+instrument
+publisher
+country of origin
+developer
+creator
+award received
+cause of death
+position held
+manufacturer
+voice type
+record label
+present in work
+architect
+founder
+dissolved or abolished
+mouth of the watercourse
+distributor
+mother
+lyrics by
+point in time
+connecting line
+discoverer or inventor
+language of work or name
+licensed to broadcast to
+from fictional universe
+named after
+place of burial
+designer
+film editor
+stock exchange
+employer
+production company
+located on astronomical body
+time of spacecraft launch
+league
+home venue
+IUCN conservation status
+drafted by
+child
+vessel class
+location of formation
+airline hub
+time of discovery
+service entry
+crosses
+instrumentation
+chromosome
+brother
+spouse
+narrative location
+site of astronomical discovery
+programming language
+medical condition
+parent company
+date of official opening
+found in taxon
+material used
+residence
+noble family
+illustrator
+end time
+product
+based on
+manner of death
+located next to body of water
+convicted of
+start time
+occupant
+head of government
+replaced by
+noble title
+sister
+industry
+editor
+religious order
+collection
+canonization status
+characters
+architectural style
+standards body
+military rank
+nominated for
+license
+conferred by
+chairperson
+operating system

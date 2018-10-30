@@ -3,8 +3,8 @@ import os
 from date_parsers import DateFormatterFactory
 from tokenizers import SpacyTokenizer
 
-LANG = 'es'
-LOCALE = 'es-ES'
+LANG = 'it'
+LOCALE = 'it-IT'
 
 NUM_WORKERS = 6
 CHUNK_SIZE = 1000
