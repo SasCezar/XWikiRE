@@ -13,6 +13,8 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
+from article_extractors import ArticleExtractorFactory
+from template_fillers import TemplateFillerFactory
 from utils import get_chunks, is_sublist
 
 
@@ -33,6 +35,8 @@ SEP_MAPPING = {
     3: ' ',
     4: '\n\n'
 }
+
+article_extractor = ArticleExtractorFactory.make_extractor(config.LANG)
 
 
 def rebuild_sentence(start, end, tokens, breaks):
@@ -94,11 +98,12 @@ def build(limit, configs):
     for page in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         omer_doc = {"id": page['id'], "break_levels": page['break_levels'], "string_sequence": page['string_sequence'],
                     "sentence_breaks": page['sentence_breaks'], "text": page['text'],
-                    "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {}}
+                    "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {},
+                    'entity_article': article_extractor.extract(page['text'], page['label'])}
 
         qas = defaultdict(list)
         for prop in page['facts']:
-            question = page['properties'][prop]
+            relation = page['properties'][prop]
             omer_doc['QA'][prop] = []
 
             for fact in page['facts'][prop]:
@@ -113,7 +118,7 @@ def build(limit, configs):
                 sentence_sequence = omer_doc["string_sequence"][start:end]
                 sentence = rebuild_sentence(start, end, omer_doc['string_sequence'], omer_doc['break_levels'])
                 sentence = clean_sentence(sentence)
-                qa = {"question": question['label'], "sentence": sentence, "sentence_sequence": sentence_sequence,
+                qa = {"relation": relation['label'], "sentence": sentence, "sentence_sequence": sentence_sequence,
                       "answer": fact['value'], "id": get_id_for_qa(page['id'], prop, fact['id']),
                       "answer_sequence": answer_sequence, "answer_id": fact['id'], "prop_id": prop,
                       "type": fact['type'], "example": "positive"}
@@ -185,6 +190,15 @@ def build_omer(configs):
     return
 
 
+def read_questions_templates(path):
+    templates = defaultdict(list)
+    with open(path, "rt", encoding="utf8") as inf:
+        reader = csv.reader(inf, delimiter=",")
+        for pid, relation, eng, google, template in reader:
+            templates[pid].append(template)
+    return templates
+
+
 def extract_examples(example_type="negative"):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
@@ -198,6 +212,10 @@ def extract_examples(example_type="negative"):
         for pid, _ in reader:
             omer_props.add(pid)
 
+    template_filler = TemplateFillerFactory.make_filler(config.LANG)
+
+    question_templates = read_questions_templates("../resources/templates/templates_translation_{}.csv".format(config.LANG))
+
     with open("es_qa_neg.txt", "wt", encoding="utf8", newline="") as outf:
         writer = csv.writer(outf, delimiter="\t")
         for document in documents:
@@ -206,13 +224,16 @@ def extract_examples(example_type="negative"):
                     continue
                 for qa in document['QA'][prop]:
                     if example_type and qa['example'] == example_type:
-                        writer.writerow([qa['id'], qa['prop_id'], qa['question'], document['label'], qa['sentence'],
-                                         qa['answer']])
+                        for template in question_templates[prop]:
+                            question = template_filler.fill(template, document['label'],
+                                                            article=document['entity_article'])
+                            writer.writerow(
+                                [qa['id'], qa['prop_id'], qa['relation'], template, question, document['label'], qa['sentence'], qa['answer']])
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    # build_omer({})
+    build_omer({})
     extract_examples()
     logging.info("Completed %s", " ".join(sys.argv))
