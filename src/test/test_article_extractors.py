@@ -72,10 +72,10 @@ Emma Thompson.
     def test_bug(self):
         extractor = ItalianArticleExtractor()
         text = """La Online Encyclopedia of Mass Violence (OEMV) è un progetto enciclopedico istituito su iniziativa 
-                   dello storico e politologo francese Jacques Sémelin, direttore di ricerca presso il Centre National de la 
-                   Recherche Scientifique, coadiuvato da un'équipe di docenti universitari provenienti da vari paesi. È stata 
-                   creata con lo scopo di costituire una fonte affidabile di dati riguardo a massacri, genocidi e crimini contro 
-                   non combattenti perpetrati durante il XX secolo o in precedenza. """
+        dello storico e politologo francese Jacques Sémelin, direttore di ricerca presso il Centre National de la 
+        Recherche Scientifique, coadiuvato da un'équipe di docenti universitari provenienti da vari paesi. È stata 
+        creata con lo scopo di costituire una fonte affidabile di dati riguardo a massacri, genocidi e crimini contro 
+        non combattenti perpetrati durante il XX secolo o in precedenza. """
         article = extractor.extract(text, "Online Encyclopedia of Mass Violence")
 
         self.assertEqual("La", article)
@@ -92,3 +92,37 @@ Emma Thompson.
         article = extractor.extract(text, "Four Seasons of Love")
 
         self.assertEqual("", article)
+
+    def test_neg_inside(self):
+        extractor = ItalianArticleExtractor()
+        text = """Leksand è una cittadina della Svezia centrale, capoluogo del comune omonimo, nella contea di 
+        Dalarna; nel 2010 aveva una popolazione di 5.934 abitanti.Qui è nato il musicista The Tallest Man on Earth. """
+
+        article = extractor.extract(text, "Leksand")
+
+        self.assertEqual("", article)
+
+    def test_apostrofo(self):
+        extractor = ItalianArticleExtractor()
+        text = """Astronomia è la scienza che si occupa dell'osservazione e della spiegazione degli eventi celesti. 
+        Studia le origini e l'evoluzione, le proprietà fisiche, chimiche e temporali degli oggetti che formano 
+        l'universo e che possono essere osservati sulla sfera celeste. 
+
+È una delle scienze più antiche e molte civiltà arcaiche in tutto il mondo hanno studiato in modo più o meno 
+sistematico il cielo e gli eventi astronomici: egizi e greci nell'area mediterranea, babilonesi, indiani e cinesi 
+nell'oriente, fino ai maya e agli incas nelle Americhe. Questi antichi studi astronomici erano orientati verso lo 
+studio delle posizioni degli astri (astrometria), la periodicità degli eventi e la cosmologia e quindi, 
+in particolare per questo ultimo aspetto, l'astronomia antica è quasi sempre fortemente collegata con aspetti 
+religiosi. Oggi, invece, la ricerca astronomica moderna è praticamente sinonimo di astrofisica. 
+
+L'astronomia non va confusa con l'astrologia, una pseudoscienza che sostiene che i moti apparenti del Sole e dei 
+pianeti nello zodiaco influenzino in qualche modo gli eventi umani, personali e collettivi. Anche se le due 
+discipline hanno un'origine comune, esse sono totalmente differenti: gli astronomi hanno abbracciato il metodo 
+scientifico sin dai tempi di Galileo, a differenza degli astrologi. 
+
+L'astronomia è una delle poche scienze in cui il lavoro di ricerca del dilettante e dell'amatore (l'astrofilo) può 
+giocare un ruolo rilevante, fornendo dati sulle stelle variabili o scoprendo comete, novae, supernovae, asteroidi o 
+altri oggetti. """
+
+        article = extractor.extract(text, "Astronomia")
+        self.assertEqual("l", article)

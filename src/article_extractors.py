@@ -27,8 +27,8 @@ class ArticleExtractorI(ABC):
 class ItalianArticleExtractor(ArticleExtractorI):
     def __init__(self):
         super().__init__()
-        self._articles = ['Il', 'Lo', 'La', 'I', 'Gli', 'Le', 'L\'']
-        self._re_template = "\\b(?P<article>" + "|".join(self._articles) + ")\s?{}"
+        self._articles = ['Il', 'Lo', 'La', 'I', 'Gli', 'Le', 'L']
+        self._re_template = "\\b(?P<article>" + "|".join(["\\b" + article + "\\b" for article in self._articles]) + ")\s?{}"
 
 
 class ArticleExtractorFactory(object):

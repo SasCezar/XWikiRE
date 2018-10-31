@@ -13,7 +13,7 @@ class TestItalianTemplateFiller(unittest.TestCase):
     def test_l(self):
         filler = ItalianTemplateFiller()
 
-        template = filler.fill("Chi è il presidente diYYY XXX?", "America", article="L'")
+        template = filler.fill("Chi è il presidente diYYY XXX?", "America", article="L")
         self.assertEqual("Chi è il presidente dell'America?", template)
 
     def test_la_in(self):

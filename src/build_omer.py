@@ -240,7 +240,7 @@ def extract_examples(example_type="negative"):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    # build_omer({})
+    build_omer({})
     extract_examples()
     extract_examples("positive")
     logging.info("Completed %s", " ".join(sys.argv))

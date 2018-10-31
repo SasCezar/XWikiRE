@@ -10,18 +10,18 @@ class TemplateFillerI(ABC):
 class ItalianTemplateFiller(TemplateFillerI):
     def __init__(self):
         self._reduction_rules = {'diil': 'del', 'dilo': 'dello', 'dila': 'della',
-                                 'dii': 'dei', 'digli': 'degli', 'dile': 'delle', 'dil\'': 'dell\'',
+                                 'dii': 'dei', 'digli': 'degli', 'dile': 'delle', 'dil': 'dell\'',
                                  'suil': 'sul', 'sulo': 'sullo', 'sula': 'sulla', 'sui': 'sui',
                                  'sugli': 'sugli', 'sule': 'sulle'}
 
-        self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\s"
+        self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\b"
                                                         for preposition in self._reduction_rules.keys()]) + ")"
         self._finder = re.compile(self._template, re.IGNORECASE | re.MULTILINE)
 
     def fill(self, template: str, entity: str, **kwargs):
         article = kwargs['article'].lower()
         if entity.lower().startswith(article):
-            entity = re.sub("\\b" + article + "\s?", "", entity, 1, re.IGNORECASE)
+            entity = re.sub("\\b" + article + "\\b", "", entity, 1, re.IGNORECASE)
 
         template = template.replace("XXX", entity)
 
