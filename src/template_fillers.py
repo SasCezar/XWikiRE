@@ -17,23 +17,30 @@ class ItalianTemplateFiller(TemplateFillerI):
         self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\b"
                                                         for preposition in self._reduction_rules.keys()]) + ")"
         self._finder = re.compile(self._template, re.IGNORECASE | re.MULTILINE)
+        self._articles_gender = {'il': 'o', 'lo': 'o', 'i': 'o', 'gli': 'o', 'la': 'a', 'le': 'a'}
 
     def fill(self, template: str, entity: str, **kwargs):
         article = kwargs['article'].lower()
-        if entity.lower().startswith(article):
-            entity = re.sub("\\b" + article + "\\b", "", entity, 1, re.IGNORECASE)
-
-        template = template.replace("XXX", entity)
+        article_in_entity = True if entity.lower().startswith(article) else False
 
         if article:
-            template = template.replace("YYY", article)
+            if article_in_entity and re.search("(di|a|da|in|con|su|per)YYY", template):
+                entity = re.sub("\\b" + article + "\\b", "", entity, 1, re.IGNORECASE)
+                template = template.replace("YYY", article)
+            elif article_in_entity:
+                template = template.replace("YYY", "")
+            else:
+                template = template.replace("YYY", article)
             template = self._reduce(template)
-            if '\' ' + entity in template:
-                template = template.replace("\' ", "\'")
-
         else:
             template = template.replace("YYY", "")
 
+        template = template.replace("XXX", entity)
+        if '\' ' + entity in template:
+            template = template.replace("\' ", "\'")
+        gender = self._articles_gender.get(article, 'o')
+        template = template.replace("GGG", gender)
+        template = template.replace("XXX", entity)
         template = re.sub("\s{2,}", " ", template)
         return template
 

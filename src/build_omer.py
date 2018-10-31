@@ -194,12 +194,12 @@ def build_omer(configs):
 
 
 def read_questions_templates(path):
-    templates = defaultdict(list)
+    templates = defaultdict(set)
     with open(path, "rt", encoding="utf8") as inf:
         reader = csv.reader(inf, delimiter=",")
         for pid, relation, eng, google, template in reader:
             if template.strip():
-                templates[pid].append(template.strip())
+                templates[pid].add(template.strip())
     return templates
 
 
@@ -240,7 +240,7 @@ def extract_examples(example_type="negative"):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    build_omer({})
+    # build_omer({})
     extract_examples()
     extract_examples("positive")
     logging.info("Completed %s", " ".join(sys.argv))

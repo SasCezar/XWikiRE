@@ -104,7 +104,7 @@ Emma Thompson.
 
     def test_apostrofo(self):
         extractor = ItalianArticleExtractor()
-        text = """Astronomia è la scienza che si occupa dell'osservazione e della spiegazione degli eventi celesti. 
+        text = """L'Astronomia è la scienza che si occupa dell'osservazione e della spiegazione degli eventi celesti. 
         Studia le origini e l'evoluzione, le proprietà fisiche, chimiche e temporali degli oggetti che formano 
         l'universo e che possono essere osservati sulla sfera celeste. 
 
@@ -125,4 +125,4 @@ giocare un ruolo rilevante, fornendo dati sulle stelle variabili o scoprendo com
 altri oggetti. """
 
         article = extractor.extract(text, "Astronomia")
-        self.assertEqual("l", article)
+        self.assertEqual("L", article)

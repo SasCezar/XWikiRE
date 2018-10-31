@@ -21,3 +21,14 @@ class TestItalianTemplateFiller(unittest.TestCase):
 
         template = filler.fill("Chi è l'autore diYYY XXX?", "La bella e la bestia", article="La")
         self.assertEqual("Chi è l'autore della bella e la bestia?", template)
+
+    def test_gender(self):
+        filler = ItalianTemplateFiller()
+
+        template = filler.fill("Quando è statGGG lanciatGGG YYY XXX?", "Falcon 9 v1.0", article="Il")
+        self.assertEqual("Quando è stato lanciato il Falcon 9 v1.0?", template)
+
+    def test_in_capital(self):
+        filler = ItalianTemplateFiller()
+        template = filler.fill("Quando è uscitGGG YYY XXX?", "La conversazione", article="La")
+        self.assertEqual("Quando è uscita La conversazione?", template)

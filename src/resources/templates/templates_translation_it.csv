@@ -230,13 +230,13 @@ P17,country,Which country would you find yourself in if you visited XXX?,In qual
 P17,country,In which country is XXX?,In quale Paese è XXX?,
 P17,country,In which country is XXX found?,In quale Paese è stato trovato XXX?,
 P17,country,Which country contains XXX?,Quale Paese contiene XXX?,Quale paese contiene YYY XXX?
-P17,country,In which country is XXX situated?,In quale nazione si trova XXX?,In quale nazione si trova YYY XXX?
-P17,country,In which country is XXX located?,In quale paese si trova XXX?,
+P17        ,country                                         ,In which country is XXX situated?                                      ,In quale nazione si trova XXX?                                            ,In quale regione si trova YYY XXX?
+P17        ,country                                         ,In which country is XXX located?                                       ,In quale paese si trova XXX?                                              ,Di quale nazione fa parte YYY XXX?
 P17,country,In what country is XXX located?,In quale paese si trova XXX?,
 P17,country,In what country is XXX?,In quale Paese è XXX?,
 P17,country,In what country XXX is located?,In quale Paese si trova XXX?,
 P17,country,Which country can you find XXX?,In quale paese puoi trovare XXX?,In quale paese puoi trovare YYY XXX?
-P17,country,With which country would you associate XXX?,Con quale paese vorresti associare XXX?,A quale paese si accocia YYY XXX?
+P17        ,country                                         ,With which country would you associate XXX?                            ,Con quale paese vorresti associare XXX?                                   ,A quale paese si associa YYY XXX?
 P17,country,What is the country that XXX is located in?,Qual è il paese in cui si trova XXX?,Qual è il paese in cui si trova XXX?
 P17,country,What is the name of XXX's country?,Qual è il nome del paese di XXX?,Qual è il nome del paese di XXX?
 P17,country,The town of XXX is located in which country?,La città di XXX si trova in quale paese?,
@@ -689,7 +689,7 @@ P102,member of political party,Which political party was XXX a member of?,Di qua
 P102,member of political party,What political party is XXX a memeber of?,Di quale partito politico è membro XXX?,Di quale partito politico è membro XXX?
 P102,member of political party,What was the political party of XXX?,Qual è stato il partito politico di XXX?,Qual è stato il partito politico di XXX?
 P102,member of political party,From which political party is XXX?,Da quale partito politico è XXX?,Di quale partito politico è XXX?
-P102,member of political party,What party does XXX serve?,Quale parte serve XXX?,
+P102       ,member of political party                       ,What party does XXX serve?                                             ,Quale parte serve XXX?                                                    ,Con quale partito è associato XXX?
 P102,member of political party,Which political party was XXX in?,Quale partito politico era XXX in?,In quale partito politico era XXX?
 P54,member of sports team,What was the name of XXX's team?,Come si chiamava la squadra di XXX?,Come si chiamava la squadra di XXX?
 P54,member of sports team,What team does XXX play for?,Per quale squadra gioca XXX?,Per quale squadra gioca XXX?
@@ -707,7 +707,7 @@ P54,member of sports team,Which sports team is XXX playing for?,Per quale squadr
 P241,military branch,What military was XXX a part of?,Di quale militare faceva parte XXX?,Di quale unità militare faceva parte XXX?
 P241,military branch,Which armed forces utilised the service of XXX?,Quali forze armate hanno utilizzato il servizio di XXX?,
 P241,military branch,Which armed forces did XXX serve?,Quali forze armate hanno servito XXX?,In quali forze armate ha servito XXX?
-P241,military branch,What armed force did XXX serve in?,In quale forza armata è stata prestata la funzione XXX?,
+P241       ,military branch                                 ,What armed force did XXX serve in?                                     ,In quale forza armata è stata prestata la funzione XXX?                   ,In quale forza armata ha prestato servizio XXX?
 P241,military branch,What army was XXX a part of?,Di quale esercito faceva parte XXX?,Di quale ramo dell'esercito faceva parte XXX?
 P241,military branch,What military organization did XXX belong to?,A quale organizzazione militare apparteneva XXX?,A quale organizzazione militare apparteneva XXX?
 P241,military branch,What military branch was XXX in?,In quale ramo militare c'era la XXX?,
@@ -729,7 +729,7 @@ P241,military branch,Which entity was XXX a part of?,Di quale entità faceva par
 P241,military branch,What military branch is XXX?,Quale ramo militare è XXX?,
 P241,military branch,What military branch did XXX serve?,Quale ramo militare ha servito XXX?,
 P241,military branch,What branch was XXX part of?,Quale ramo era XXX parte di?,
-P241,military branch,What armed force was XXX a part of?,Di quale forza armata faceva parte XXX?,
+P241       ,military branch                                 ,What armed force was XXX a part of?                                    ,Di quale forza armata faceva parte XXX?                                   ,Di quale forza armata faceva parte XXX?
 P410,military rank,What along with privateer was XXX's military rank?,Quello che insieme al corsaro era il grado militare di XXX?,Qual era il grado militare di XXX?
 P410,military rank,What ranking did XXX hold in the military?,Quale posizione occupava XXX in campo militare?,Quale posizione occupava XXX in campo militare?
 P25,mother,The person that is the mother of XXX is who?,La persona che è la madre di XXX è chi?,
@@ -740,7 +740,7 @@ P25,mother,Which lady gave birth to XXX?,Quale donna ha dato alla luce XXX?,Qual
 P25,mother,Who was the mother of XXX?,Chi era la madre di XXX?,
 P25,mother,Who is XXX's mother?,Chi è la madre di XXX?,
 P25,mother,Which lady XXX was born to?,A quale donna è nata XXX?,Da quale donna è nata XXX?
-P25,mother,The mother of XXX is whom?,La madre di XXX è chi?,
+P25        ,mother                                          ,The mother of XXX is whom?                                             ,La madre di XXX è chi?                                                    ,Come si chiama la madre di XXX?
 P403,mouth of the watercourse,What is XXX a tributary of?,Di cos'è un affluente di XXX?,YYY XXX è un affluente di?
 P403,mouth of the watercourse,What river does XXX turn into?,In quale fiume si trasforma XXX?,In quale fiume sfocia YYY XXX?
 P403,mouth of the watercourse,What river is XXX a tributary of?,Di quale fiume è XXX un affluente di?,Di quale fiume è affluente YYY XXX?
@@ -787,7 +787,7 @@ P449,original network,Which was the network that originally hosted XXX?,Qual era
 P449,original network,Which network plays XXX?,Quale rete riproduce XXX?,
 P449,original network,What was the original network for XXX?,Qual è stata la rete originale per XXX?,
 P449,original network,What was XXX's original network?,Qual è stata la rete originale di XXX?,Qual è stata la rete originale diYYY XXX?
-P449,original network,What network hosts XXX?,Quale rete ospita XXX?,Quale rete ospita YYY XXX?
+P449       ,original network                                ,What network hosts XXX?                                                ,Quale rete ospita XXX?                                                    ,Quale rete ospita XXX?
 P449,original network,The show XXX originally aired on what network?,Lo show XXX è stato originariamente trasmesso su quale rete?,Su quale rete è stato originariamente trasmesso lo show XXX?
 P449,original network,On what channel did XXX first appear?,Su quale canale è apparso XXX per la prima volta?,
 P449,original network,On what network did XXX first play?,Su quale rete ha giocato per la prima volta XXX?,
@@ -795,7 +795,7 @@ P449,original network,Which network does XXX appear on?,Su quale rete appare XXX
 P449,original network,Where network aired XXX?,Dove la rete ha trasmesso XXX?,
 P449,original network,What network did XXX originally appear on?,In quale rete è apparso XXX in origine?,
 P449,original network,What network is XXX associated with?,Quale rete è associata a XXX?,
-P449,original network,Which channel broadcast XXX?,Quale canale trasmette XXX?,
+P449       ,original network                                ,Which channel broadcast XXX?                                           ,Quale canale trasmette XXX?                                               ,Quale canale trasmette XXX?
 P449,original network,What was the station that aired XXX?,Qual è stata la stazione che ha mandato in onda XXX?,
 P449,original network,What was the first network that XXX was on?,Qual è stata la prima rete su cui si trovava XXX?,
 P449,original network,What network did XXX air on?,In quale rete è stato attivato XXX?,
@@ -822,7 +822,7 @@ P171,parent taxon,Which family is XXX a part of?,Di quale famiglia fa parte XXX?
 P171,parent taxon,Which was the family of XXX?,Qual era la famiglia di XXX?,Qual era la famiglia diYYY XXX?
 P171,parent taxon,What kind of family is XXX of?,Di che tipo di famiglia è XXX?,
 P171,parent taxon,What family does XXX belong?,Quale famiglia appartiene a XXX?,A quale famiglia appartiene YYY XXX?
-P1344,participant of,What was the competition XXX was in?,Qual era il concorso in cui c'era la XXX?,Qual era il concorso in cui ha partecipato XXX?
+P1344      ,participant of                                  ,What was the competition XXX was in?                                   ,Qual era il concorso in cui c'era la XXX?                                 ,Qual era la competizione in cui ha partecipato XXX?
 P1344,participant of,What event was XXX a part of?,Di quale evento faceva parte XXX?,Di quale evento faceva parte XXX?
 P1344,participant of,What olympics was XXX?,Quali olimpiadi erano XXX?,
 P1344,participant of,What olympics did XXX participate in?,Quali sono le Olimpiadi a cui ha partecipato XXX?,Quali sono le olimpiadi a cui ha partecipato XXX?
@@ -880,12 +880,12 @@ P119,place of burial,Where was the body of XXX buried?,Dov'era sepolto il corpo 
 P119,place of burial,The final resting place of XXX is at what cemetery?,L'ultima dimora di XXX è in quale cimitero?,
 P119,place of burial,At what cemetery is XXX buried?,A quale cimitero è sepolto XXX?,In quale cimitero è sepolto XXX?
 P119,place of burial,What is the name of the cemetery that XXX was buried at?,Qual è il nome del cimitero in cui è stato sepolto XXX?,
-P20,place of death,At what location did XXX die?,In quale posizione è morto XXX?,
+P20        ,place of death                                  ,At what location did XXX die?                                          ,In quale posizione è morto XXX?                                           ,In quale luogo è morto XXX?
 P20,place of death,In what place did XXX die?,In quale posto è morto XXX?,In quale posto è morto XXX?
 P20,place of death,Where did XXX live when he died?,Dove ha vissuto XXX quando è morto?,
 P20,place of death,What city did XXX live when he died?,In quale città ha vissuto XXX quando è morto?,In quale città ha vissuto XXX quando è morto?
 P20,place of death,In what city did XXX die?,In quale città è morto XXX?,
-P585,point in time,What date is associated with XXX?,Quale data è associata a XXX?,Quale data è associata a XXX?
+P585       ,point in time                                   ,What date is associated with XXX?                                      ,Quale data è associata a XXX?                                             ,A quale data è associato YYY XXX?
 P585,point in time,When did XXX occurr?,Quando è accaduto XXX?,Quando è accaduto XXX?
 P585,point in time,The point in time of XXX was when?,Il momento nel tempo di XXX è stato quando?,
 P585,point in time,What was the date of XXX?,Qual è stata la data di XXX?,Qual è stata la data diYYY XXX?
@@ -952,22 +952,22 @@ P272,production company,The production company responsible for XXX is what?,La s
 P277,programming language,Which programming language is XXX written in?,In quale linguaggio di programmazione è scritto XXX?,In quale linguaggio di programmazione è scritto XXX?
 P277,programming language,What programming language was used to write XXX?,Quale linguaggio di programmazione è stato utilizzato per scrivere XXX?,Quale linguaggio di programmazione è stato utilizzato per scrivere XXX?
 P277,programming language,What is the programming language for XXX?,Qual è il linguaggio di programmazione per XXX?,Qual è il linguaggio di programmazione usato per XXX?
-P577,publication date,Which year is XXX released?,In quale anno viene pubblicato XXX?,
+P577       ,publication date                                ,Which year is XXX released?                                            ,In quale anno viene pubblicato XXX?                                       ,In quale anno viene pubblicatGGG YYY XXX?
 P577,publication date,Which was the year of XXX?,Qual è stato l'anno di XXX?,
 P577,publication date,When was XXX released?,Quando è stato rilasciato XXX?,
-P577,publication date,What year was XXX released?,In che anno è stata pubblicata XXX?,
+P577       ,publication date                                ,What year was XXX released?                                            ,In che anno è stata pubblicata XXX?                                       ,In che anno è statGGG pubblicatGGG YYY XXX?
 P577,publication date,What was the year of XXX?,Qual è stato l'anno di XXX?,
 P577,publication date,What is the year that XXX was released?,Qual è l'anno in cui è stato pubblicato XXX?,
 P577,publication date,The year that XXX was made was what?,L'anno in cui è stata fatta XXX è stato cosa?,
-P577,publication date,In what year was XXX released?,In che anno è stato pubblicato XXX?,In che anno è stato pubblicato XXX?
-P577,publication date,In what year is the film XXX released?,In quale anno viene pubblicato il film XXX?,In quale anno viene pubblicato il film XXX?
+P577       ,publication date                                ,In what year was XXX released?                                         ,In che anno è stato pubblicato XXX?                                       ,
+P577       ,publication date                                ,In what year is the film XXX released?                                 ,In quale anno viene pubblicato il film XXX?                               ,In quale anno viene pubblicatGGG YYY XXX?
 P577,publication date,What year did XXX come out?,In che anno è uscito XXX?,
 P577,publication date,What year was XXX made?,In che anno è stato creato XXX?,In che anno è statGGG creatGGG YYY XXX?
 P577,publication date,What was the year of publication for XXX?,Qual è stato l'anno di pubblicazione per XXX?,
 P577,publication date,Which was the year XXX was made?,Qual è stato l'anno in cui è stato creato XXX?,
 P577,publication date,Which was the publication date of XXX?,Qual era la data di pubblicazione di XXX?,
 P577,publication date,Which is the publication date of XXX?,Qual è la data di pubblicazione di XXX?,Qual è la data di pubblicazione diYYY XXX?
-P577,publication date,When did XXX come out?,Quando è uscito XXX?,Quando è uscitGGG XXX?
+P577       ,publication date                                ,When did XXX come out?                                                 ,Quando è uscito XXX?                                                      ,Quando è uscitGGG YYY XXX?
 P577,publication date,What year was XXX realeased in?,In che anno è stato realizzato XXX?,
 P577,publication date,What was the year in which XXX was made?,Qual è stato l'anno in cui è stata creata XXX?,
 P577,publication date,What was the release year of XXX?,Qual è stato l'anno di uscita di XXX?,
@@ -975,17 +975,17 @@ P577,publication date,The year of XXX was what?,L'anno di XXX era cosa?,
 P577,publication date,The date of publication for XXX was what?,La data di pubblicazione per XXX era cosa?,Qual è la data di pubblicazione diYYY XXX?
 P577,publication date,When was XXX made?,Quando è stato realizzato XXX?,
 P577,publication date,When was XXX in theaters?,Quando era XXX nei cinema?,
-P577,publication date,What was the publication year of XXX?,Qual è stato l'anno di pubblicazione di XXX?,Qual è stato l'anno di pubblicazione di XXX?
+P577       ,publication date                                ,What was the publication year of XXX?                                  ,Qual è stato l'anno di pubblicazione di XXX?                              ,Qual è stato l'anno di pubblicazione diYYY XXX?
 P577,publication date,What is the publication year of XXX?,Qual è l'anno di pubblicazione di XXX?,
 P577,publication date,What is the publication date of XXX?,Qual è la data di pubblicazione di XXX?,
 P577,publication date,The publication date of XXX is what?,La data di pubblicazione di XXX è cosa?,
-P577,publication date,In what year was XXX published?,In quale anno è stato pubblicato XXX?,In quale anno è stato pubblicato XXX?
-P577,publication date,When was XXX published?,Quando è stato pubblicato XXX?,Quando è stato pubblicato XXX?
+P577       ,publication date                                ,In what year was XXX published?                                        ,In quale anno è stato pubblicato XXX?                                     ,In quale anno è statGGG pubblicatGGG YYY XXX?
+P577       ,publication date                                ,When was XXX published?                                                ,Quando è stato pubblicato XXX?                                            ,Quando è statGGG pubblicatGGG YYY XXX?
 P123,publisher,Who was the publisher of XXX?,Chi era l'editore di XXX?,Chi era l'editore diYYY XXX?
 P123,publisher,What is the name of the publisher of XXX?,Qual è il nome dell'editore di XXX?,Qual è il nome dell'editore diYYY XXX?
 P123,publisher,The publisher that published XXX is what?,L'editore che ha pubblicato XXX è cosa?,
 P123,publisher,Who published XXX?,Chi ha pubblicato XXX?,Chi ha pubblicato YYY XXX?
-P123,publisher,What company published XXX?,Quale azienda ha pubblicato XXX?,
+P123       ,publisher                                       ,What company published XXX?                                            ,Quale azienda ha pubblicato XXX?                                          ,Quale azienda ha pubblicato XXX?
 P123,publisher,What business published XXX?,Quale attività ha pubblicato XXX?,
 P123,publisher,What is the publisher of XXX?,Qual è l'editore di XXX?,
 P264,record label,What was the record label of XXX?,Qual era l'etichetta discografica di XXX?,Qual era l'etichetta discografica di XXX?
@@ -1058,15 +1058,15 @@ P21,sex or gender,Which gender is XXX?,Quale genere è XXX?,
 P21,sex or gender,What sex is XXX?,Che sesso è XXX?,
 P9,sister,Who is XXX's sister?,Chi è la sorella di XXX?,Chi è la sorella di XXX?
 P9,sister,Which woman was the sister of XXX?,Quale donna era la sorella di XXX?,Quale donna era la sorella di XXX?
-P65,site of astronomical discovery,At what observatory or station was XXX discovered?,A quale osservatorio o stazione è stato scoperto XXX?,Da quale osservatorio o stazione è stato scoperto XXX?
+P65        ,site of astronomical discovery                  ,At what observatory or station was XXX discovered?                     ,A quale osservatorio o stazione è stato scoperto XXX?                     ,Da quale osservatorio o stazione è stato scopertGGG YYY XXX?
 P65,site of astronomical discovery,What observatory or station found XXX?,Quale osservatorio o stazione ha trovato XXX?,Quale osservatorio o stazione ha trovato XXX?
 P65,site of astronomical discovery,What observatory or station is XXX associated with?,A quale osservatorio o stazione è associato XXX?,A quale osservatorio o stazione è associato XXX?
 P65,site of astronomical discovery,At what observatory was XXX discovered?,A quale osservatorio è stato scoperto XXX?,
-P65,site of astronomical discovery,At which observatory was XXX discovered?,In quale osservatorio è stato scoperto XXX?,In quale osservatorio è stato scoperto XXX?
-P65,site of astronomical discovery,What observatory is XXX associated with?,A quale osservatorio è associato XXX?,A quale osservatorio è associata la scoperta di XXX?
+P65        ,site of astronomical discovery                  ,At which observatory was XXX discovered?                               ,In quale osservatorio è stato scoperto XXX?                               ,In quale osservatorio è stato scopertGGG YYY XXX?
+P65        ,site of astronomical discovery                  ,What observatory is XXX associated with?                               ,A quale osservatorio è associato XXX?                                     ,A quale osservatorio è associata la scoperta diYYY XXX?
 P65,site of astronomical discovery,What observatory did scientists use to find XXX?,Quale osservatorio utilizzava gli scienziati per trovare XXX?,
 P65,site of astronomical discovery,Where was the discovery of XXX made?,Dove è stata scoperta la XXX?,
-P65,site of astronomical discovery,In which labboratory was XXX discovered?,In quale labboria è stata scoperta XXX?,Quale laboratorio ha scoperto XXX?
+P65        ,site of astronomical discovery                  ,In which labboratory was XXX discovered?                               ,In quale labboria è stata scoperta XXX?                                   ,Quale laboratorio ha scopertGGG YYY XXX?
 P641,sport,Which sport is XXX associated with?,A quale sport è associato XXX?,A quale sport è associato XXX?
 P641,sport,Which sport does/did XXX play?,Quale sport fa / ha XXX giocare?,Quale sport pratica XXX?
 P641,sport,To which sports is XXX related?,A quali sport è associato XXX?,
@@ -1088,7 +1088,7 @@ P641,sport,Which sport does XXX practice?,Quale sport pratica XXX?,
 P641,sport,With what sport does XXX work with?,Con quale sport lavora XXX?,
 P26,spouse,What is XXX's spouse's name?,Qual è il nome del coniuge di XXX?,Quale è il nome del consorte di XXX?
 P26,spouse,What is XXX's spouse's name?,Qual è il nome del coniuge di XXX?,Qual è il nome del coniuge di XXX?
-P1462,standards body,Who set the standards for XXX?,Chi stabilisce gli standard per XXX?,Chi stabilisce gli standard per XXX?
+P1462      ,standards body                                  ,Who set the standards for XXX?                                         ,Chi stabilisce gli standard per XXX?                                      ,Chi stabilisce gli standard per YYY XXX?
 P580,start time,What year did XXX start?,In che anno è iniziato XXX?,In che anno ha avuto inizio YYY XXX?
 P414,stock exchange,What stock exchange is most closely associated with XXX?,Quale borsa è più strettamente associata a XXX?,Quale borsa è più associata a XXX?
 P414,stock exchange,Which exchange is XXX on?,Su quale scambio è attivo XXX?,
@@ -1119,10 +1119,10 @@ P575,time of discovery,When does the XXX found?,Quando viene trovato il XXX?,
 P575,time of discovery,When did the discovery or creation of XXX occur?,Quando è avvenuta la scoperta o la creazione di XXX?,Quando è avvenuta la scoperta o la creazione diYYY XXX?
 P575,time of discovery,What time was XXX found?,A che ora è stata trovata XXX?,
 P575,time of discovery,What is the full date of discovery for XXX?,Qual è la data completa della scoperta per XXX?,Qual è la data completa della scoperta diYYY XXX?
-P575,time of discovery,The year that XXX was discovered was when?,L'anno in cui è stata scoperta XXX è stata quando?,In quale anno è avvenuta la scoperta di YYY XXX?
-P575,time of discovery,The discovery date or year of XXX is?,La data o l'anno di scoperta di XXX è?,Qual è la data o l'anno di scoperta di XXX?
+P575       ,time of discovery                               ,The year that XXX was discovered was when?                             ,L'anno in cui è stata scoperta XXX è stata quando?                        ,In quale anno è avvenuta la scoperta diYYY XXX?
+P575       ,time of discovery                               ,The discovery date or year of XXX is?                                  ,La data o l'anno di scoperta di XXX è?                                    ,Qual è la data o l'anno di scoperta diYYY XXX?
 P619,time of spacecraft launch,On what date did XXX lift off?,In che data XXX ha decollato?,In che data ha decollato YYY XXX?
-P619,time of spacecraft launch,When was the launch date of XXX?,Quando è stata la data di lancio di XXX?,Quando è stata la data di lancio di XXX?
+P619       ,time of spacecraft launch                       ,When was the launch date of XXX?                                       ,Quando è stata la data di lancio di XXX?                                  ,Quando è stata la data di lancio diYYY XXX?
 P619,time of spacecraft launch,When was XXX's launch date?,Quando è stata la data di lancio di XXX?,
 P619,time of spacecraft launch,What was the launch date of XXX?,Qual è stata la data di lancio di XXX?,Qual è stata la data di lancio diYYY XXX?
 P619,time of spacecraft launch,What was the date XXX was launched?,Qual è stata la data in cui è stato lanciato XXX?,Qual è stata la data in cui è statGGG lanciatGGG XXX?
@@ -1134,10 +1134,10 @@ P619,time of spacecraft launch,What day was XXX launched?,In che giorno è stato
 P619,time of spacecraft launch,On what date was XXX launched?,In quale data è stato lanciato XXX?,
 P619,time of spacecraft launch,On what date did XXX take off?,In quale data ha preso il volo XXX?,
 P619,time of spacecraft launch,The XXX was launched on what date?,Il XXX è stato lanciato in quale data?,
-P289,vessel class,What specific type of seafaring vessel was XXX?,Quale tipo specifico di nave marittima era XXX?,
-P289,vessel class,What type of submarine was XXX classified as?,Che tipo di sottomarino è stato classificato XXX?,
+P289       ,vessel class                                    ,What specific type of seafaring vessel was XXX?                        ,Quale tipo specifico di nave marittima era XXX?                           ,Che tipo di nave marittima è XXX?
+P289       ,vessel class                                    ,What type of submarine was XXX classified as?                          ,Che tipo di sottomarino è stato classificato XXX?                         ,Qual è la classificazione del sottomarino XXX?
 P289,vessel class,What type of aquatic unit is XXX?,Che tipo di unità acquatica è XXX?,Che tipo di unità acquatica è XXX?
-P289,vessel class,What vessel type is XXX?,Quale tipo di imbarcazione è XXX?,Qual è il tipo di imbarcazione di XXX?
+P289       ,vessel class                                    ,What vessel type is XXX?                                               ,Quale tipo di imbarcazione è XXX?                                         ,Qual è il tipo di imbarcazione diYYY XXX?
 P412,voice type,What voice type is XXX?,Che tipo di voce è XXX?,
 P412,voice type,Which was the voice type that XXX had?,Qual era il tipo di voce che aveva XXX?,
 P412,voice type,What type of tone does XXX sing in?,In che tipo di tono canta XXX?,
