@@ -9,15 +9,24 @@ class TemplateFillerI(ABC):
 
 class ItalianTemplateFiller(TemplateFillerI):
     def __init__(self):
-        self._reduction_rules = {'diil': 'del', 'dilo': 'dello', 'dila': 'della',
-                                 'dii': 'dei', 'digli': 'degli', 'dile': 'delle', 'dil': 'dell\'',
-                                 'suil': 'sul', 'sulo': 'sullo', 'sula': 'sulla', 'sui': 'sui',
-                                 'sugli': 'sugli', 'sule': 'sulle'}
+        self._reduction_rules = {'diil': 'del', 'dilo': 'dello', 'dila': 'della', 'dii': 'dei', 'digli': 'degli',
+                                 'dile': 'delle', 'dil': 'dell\'',
+                                 'ail': 'al', 'alo': 'allo', 'ala': 'alla', 'ai': 'ai', 'agli': 'agli', 'ale': 'alle',
+                                 'dail': 'dal', 'dalo': 'dallo', 'dala': 'dalla', 'dai': 'dai', 'dagli': 'dagli',
+                                 'dale': 'dalle',
+                                 'inil': 'nel', 'inlo': 'nello', 'inla': 'nella', 'ini': 'nei', 'ingli': 'negli',
+                                 'inle': 'nelle',
+                                 'conil': 'col', 'conlo': 'cóllo', 'conla': 'cólla', 'coni': 'coi', 'congli': 'cogli',
+                                 'conle': 'cólle',
+                                 'suil': 'sul', 'sulo': 'sullo', 'sula': 'sulla', 'sui': 'sui', 'sugli': 'sugli',
+                                 'sule': 'sulle',
+                                 'peril': 'pel', 'perlo': 'pello', 'perla': 'pella', 'peri': 'pei', 'pergli': 'pegli',
+                                 'perle': 'pelle'}
 
         self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\b"
                                                         for preposition in self._reduction_rules.keys()]) + ")"
         self._finder = re.compile(self._template, re.IGNORECASE | re.MULTILINE)
-        self._articles_gender = {'il': 'o', 'lo': 'o', 'i': 'o', 'gli': 'o', 'la': 'a', 'le': 'a'}
+        self._articles_gender = {'il': 'o', 'lo': 'o', 'i': 'i', 'gli': 'i', 'la': 'a', 'le': 'e'}
 
     def fill(self, template: str, entity: str, **kwargs):
         article = kwargs['article'].lower()
