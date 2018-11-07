@@ -1,6 +1,6 @@
 import unittest
 
-from date_parsers import DateFormatter, RomanLanguageDateFormatter, EnglishDateFormatter
+from date_formatter import DateFormatter, RomanLanguageDateFormatter, EnglishDateFormatter
 
 
 class TestFormatterMethods(unittest.TestCase):

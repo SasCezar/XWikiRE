@@ -1,6 +1,6 @@
 import os
 
-from date_parsers import DateFormatterFactory
+from date_formatter import DateFormatterFactory
 from tokenizers import SpacyTokenizer
 
 LANG = 'it'
