@@ -1,23 +1,11 @@
 import re
-from abc import ABC, abstractmethod
+from abc import ABC
 
 
 class ArticleExtractorI(ABC):
     def __init__(self):
         self._articles = []
         self._re_template = ''
-
-    @abstractmethod
-    def extract(self, text, entity):
-        raise NotImplemented
-
-
-class ItalianArticleExtractor(ArticleExtractorI):
-    def __init__(self):
-        super().__init__()
-        self._articles = ['Il', 'Lo', 'La', 'I', 'Gli', 'Le', 'L']
-        self._re_template = "(?P<article>" + "|".join(
-            ["\\b" + article + "\\b" for article in self._articles]) + ")(\s?|\'){}"
 
     def extract(self, text, entity):
         article = ''
@@ -34,6 +22,23 @@ class ItalianArticleExtractor(ArticleExtractorI):
             return article
 
         return article
+
+
+class ItalianArticleExtractor(ArticleExtractorI):
+    def __init__(self):
+        super().__init__()
+        self._articles = ['Il', 'Lo', 'La', 'I', 'Gli', 'Le', 'L']
+        self._re_template = "(?P<article>" + "|".join(
+            ["\\b" + article + "\\b" for article in self._articles]) + ")(\s?|\'){}"
+
+
+class FrenchArticleExtractor(ArticleExtractorI):
+    def __init__(self):
+        super().__init__()
+        self._articles = ['Le', 'La', 'L', 'Les']
+        self._re_template = "(?P<article>" + "|".join(
+            ["\\b" + article + "\\b" for article in self._articles]) + ")(\s?|\'){}"
+
 
 class ArticleExtractorFactory(object):
     @staticmethod

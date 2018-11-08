@@ -25,7 +25,7 @@ class ItalianTemplateFiller(TemplateFillerI):
 
         self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\b"
                                                         for preposition in self._reduction_rules.keys()]) + ")"
-        self._finder = re.compile(self._template, re.IGNORECASE | re.MULTILINE)
+        self._finder = re.compile(self._template, re.IGNORECASE)
         self._articles_gender = {'il': 'o', 'lo': 'o', 'i': 'i', 'gli': 'i', 'la': 'a', 'le': 'e'}
 
     def fill(self, template: str, entity: str, **kwargs):
@@ -44,12 +44,11 @@ class ItalianTemplateFiller(TemplateFillerI):
         else:
             template = template.replace("YYY", "")
 
-        template = template.replace("XXX", entity)
-        if '\' ' + entity in template:
-            template = template.replace("\' ", "\'")
         gender = self._articles_gender.get(article, 'o')
         template = template.replace("GGG", gender)
         template = template.replace("XXX", entity)
+        if '\' ' + entity in template:
+            template = template.replace("\' ", "\'")
         template = re.sub("\s{2,}", " ", template)
         return template
 
@@ -60,6 +59,16 @@ class ItalianTemplateFiller(TemplateFillerI):
             template = template.replace(preposition, self._reduction_rules[preposition])
 
         return template
+
+
+class FrenchTemplateFiller(TemplateFillerI):
+    def __init__(self):
+        self._reduction_rules = {'dele': 'du', 'dela': 'de la', 'del': 'de l\'', 'deles': 'des',
+                                 'àle': 'au', 'àla': 'à la', 'àl': 'à l\'', 'àles': 'aux'}
+
+        self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\b"
+                                                        for preposition in self._reduction_rules.keys()]) + ")"
+        self._finder = re.compile(self._template, re.IGNORECASE)
 
 
 class TemplateFillerFactory(object):
