@@ -51,7 +51,7 @@ def get_omer_props(path="C:\\Users\sasce\PycharmProjects\WikiReading\src\\resour
 
 def get_combinations(iterable):
     result = []
-    for length in range(2, len(iterable)):
+    for length in range(2, len(iterable) + 1):
         result.extend(itertools.combinations(iterable, length))
 
     return result
@@ -62,8 +62,9 @@ def get_qa_id_itersection():
 
     omer_props = get_omer_props()
 
-    qa_ids_per_prop_and_lang = defaultdict(lambda _: {key: set() for key in omer_props})
+    qa_ids_per_prop_and_lang = {lang: {key: set() for key in omer_props} for lang in langs}
     for lang in langs:
+        print("Processing lang {}".format(lang))
         client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
         db = client[config.DB]
         wikipedia = db["{}wiki_omer".format(lang)]
@@ -77,9 +78,9 @@ def get_qa_id_itersection():
                 for ex in qa[prop]:
                     ex_type = ex['example']
                     if ex_type == 'positive':
-                        qa_ids_per_prop_and_lang[lang][prop].add(qa['id'])
+                        qa_ids_per_prop_and_lang[lang][prop].add(ex['id'])
 
-    qa_ids_per_prop_combs = defaultdict(lambda _: {key: 0 for key in omer_props})
+    qa_ids_per_prop_combs = defaultdict(lambda: {key: 0 for key in omer_props})
     for comb in get_combinations(langs):
         for prop in omer_props:
             elements = copy.deepcopy(qa_ids_per_prop_and_lang[comb[0]][prop])
@@ -89,7 +90,7 @@ def get_qa_id_itersection():
             qa_ids_per_prop_combs[comb][prop] = len(elements)
 
     for key in qa_ids_per_prop_combs:
-        with open("{}_qa_intersection".format("-".format(key)), "rt", encoding="utf8") as outf:
+        with open("{}_qa_intersection.txt".format("-".join(key)), "wt", encoding="utf8") as outf:
             writer = csv.writer(outf)
             for prop in qa_ids_per_prop_combs[key]:
                 writer.writerow([prop, qa_ids_per_prop_combs[key][prop]])

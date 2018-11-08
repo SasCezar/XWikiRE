@@ -101,8 +101,8 @@ def build(limit, configs):
     for page in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         omer_doc = {"id": page['id'], "break_levels": page['break_levels'], "string_sequence": page['string_sequence'],
                     "sentence_breaks": page['sentence_breaks'], "text": page['text'],
-                    "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {},
-                    'entity_article': article_extractor.extract(page['text'], page['label'])}
+                    "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {}}
+        # 'entity_article': article_extractor.extract(page['text'], page['label'])}
 
         qas = defaultdict(list)
         for prop in page['facts']:
@@ -240,7 +240,7 @@ def extract_examples(example_type="negative"):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    # build_omer({})
-    extract_examples()
-    extract_examples("positive")
+    build_omer({})
+    # extract_examples()
+    # extract_examples("positive")
     logging.info("Completed %s", " ".join(sys.argv))
