@@ -1,14 +1,17 @@
 import csv
 import hashlib
 import itertools
+import json
 import logging
 import multiprocessing
 import re
 import sys
 import time
+import traceback
 from collections import defaultdict
 from functools import partial
 
+import nltk
 from natural.date import compress
 from pymongo import MongoClient
 
@@ -45,6 +48,8 @@ article_extractor = ArticleExtractorFactory.make_extractor(config.LANG)
 def rebuild_sentence(start, end, tokens, breaks):
     sentence = ""
     for separator, token in zip(breaks[start:end], tokens[start:end]):
+        if not token:
+            sentence += " "
         sentence += SEP_MAPPING[separator] + token
 
     return sentence.strip()
@@ -66,10 +71,11 @@ def get_id_for_qa(page_id, prop_id, answer_id):
 def _create_negative(a, b):
     if a['prop_id'] == b['prop_id']:
         return {}
-    if not is_sublist(a['answer_sequence'], b['sentence_sequence']):
-        neg_a = {"relation": a['relation'], "sentence": b['sentence'], "sentence_sequence": b['sentence_sequence'],
+    e_template = "\\b" + re.escape(a['answer']) + "\\b"
+    if not re.search(e_template, b['sentence']):
+        neg_a = {"relation": a['relation'], "sentence": b['sentence'],
                  "answer": "", "id": get_id_for_qa(a['id'], a['prop_id'], b['id']),
-                 "answer_sequence": [], "answer_id": 0, "prop_id": a['prop_id'],
+                 "answer_id": 0, "prop_id": a['prop_id'],
                  "type": a['type'], "example": "negative", "source_a": a['id'], "source_b": b['id']}
         return neg_a
     return {}
@@ -87,6 +93,19 @@ def create_negatives(qas):
     return neg_examples
 
 
+tokenizer = config.TOKENIZER
+
+
+def string_distant_supervision(answer, entity, sentences):
+    e_template = "\\b" + re.escape(entity) + "\\b"
+    a_template = "\\b" + re.escape(answer) + "\\b"
+    for sentence in sentences:
+        if re.search(e_template, sentence) and re.search(a_template, sentence):
+            return sentence
+
+    return False
+
+
 def build(limit, configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
@@ -99,31 +118,45 @@ def build(limit, configs):
     pos_count = 0
     start_time = time.time()
     for page in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
-        omer_doc = {"id": page['id'], "break_levels": page['break_levels'], "string_sequence": page['string_sequence'],
-                    "sentence_breaks": page['sentence_breaks'], "text": page['text'],
-                    "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {}}
-        # 'entity_article': article_extractor.extract(page['text'], page['label'])}
-
+        text = page['text'].strip()
+        if not text:
+            continue
+        # table = str.maketrans({"\t": "\\t", "\r": "\\r", "\f": "\\f", "\b": "\\b"})
+        # text = text.translate(table).strip()
+        # text = re.sub("(\n|\s){2,}", "\n\n", text)
+        # text = re.sub("\n{3,}", "\n\n", text)
+        sentences = nltk.tokenize.sent_tokenize(text, language='english')
+        omer_doc = {"id": page['id'], "string_sequence": page['string_sequence'],
+                    "text": page['text'],
+                    "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {},
+                    'entity_article': ''}
+        # article_extractor.extract(page['text'], page['label'])
         qas = defaultdict(list)
         for prop in page['facts']:
             relation = page['properties'][prop]
             omer_doc['QA'][prop] = []
 
             for fact in page['facts'][prop]:
-                answer_sequence = fact['value_sequence']
+                answer = fact['value']
 
-                match_index = distant_supervision(answer_sequence, omer_doc['label_sequence'],
-                                                  omer_doc['string_sequence'], omer_doc['sentence_breaks'])
+                # match_index = distant_supervision(answer_sequence, omer_doc['label_sequence'],
+                #                                   omer_doc['string_sequence'], omer_doc['sentence_breaks'])
+                #
+                # if not match_index:
+                #     continue
+                # start, end = match_index
+                # sentence_sequence = omer_doc["string_sequence"][start:end]
+                # sentence = rebuild_sentence(start, end, omer_doc['string_sequence'], omer_doc['break_levels'])
+                # sentence = clean_sentence(sentence)
 
-                if not match_index:
+                sentence = string_distant_supervision(answer, omer_doc['label'], sentences)
+
+                if not sentence:
                     continue
-                start, end = match_index
-                sentence_sequence = omer_doc["string_sequence"][start:end]
-                sentence = rebuild_sentence(start, end, omer_doc['string_sequence'], omer_doc['break_levels'])
-                sentence = clean_sentence(sentence)
-                qa = {"relation": relation['label'], "sentence": sentence, "sentence_sequence": sentence_sequence,
+
+                qa = {"relation": relation['label'], "sentence": sentence,
                       "answer": fact['value'], "id": get_id_for_qa(page['id'], prop, fact['id']),
-                      "answer_sequence": answer_sequence, "answer_id": fact['id'], "prop_id": prop,
+                      "answer_id": fact['id'], "prop_id": prop,
                       "type": fact['type'], "example": "positive"}
 
                 pos_count += 1
@@ -203,7 +236,7 @@ def read_questions_templates(path):
     return templates
 
 
-def extract_examples(example_type="negative"):
+def extract_examples(example_type):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.OMERMERGE_COLLECTION]
@@ -221,8 +254,8 @@ def extract_examples(example_type="negative"):
     question_templates = read_questions_templates(
         "resources/templates/templates_translation_{}.csv".format(config.LANG))
 
-    with open("{}_qa_{}.txt".format(config.LANG, example_type), "wt", encoding="utf8", newline="") as outf:
-        writer = csv.writer(outf, delimiter="\t")
+    with open("{}_qa_{}.json".format(config.LANG, example_type), "wt", encoding="utf8", newline="") as outf:
+        i = 0
         for document in documents:
             for prop in document['QA']:
                 if prop not in omer_props:
@@ -232,15 +265,36 @@ def extract_examples(example_type="negative"):
                         for template in question_templates[prop]:
                             question = template_filler.fill(template, document['label'],
                                                             article=document['entity_article'])
-                            writer.writerow(
-                                [qa['id'], qa['prop_id'], qa['relation'], template, document['label'], question,
-                                 qa['sentence'], qa['answer']])
+                            example = {'context': qa['sentence'], 'id': qa['id'], 'prop_id': qa['prop_id'],
+                                       'property': qa['relation'], 'template': template, 'entity': document['label'],
+                                       'answer': qa['answer'], 'question': question}
+                            if example_type == "positive":
+                                try:
+                                    context = example['context']
+                                    answer_text = example['answer']
+                                    start_index = context.index(answer_text)
+                                    end_index = start_index + len(answer_text)
+                                    assert end_index <= len(context)
+                                except:
+                                    traceback.print_exc()
+                                    i += 1
+                                    print("Answer: {} ---- Context: {}".format(example['answer'], example['context']))
+                                    continue
+                                example['start_index'] = start_index
+                                example['end_index'] = end_index
+                                example['na'] = 1
+                            else:
+                                example['start_index'] = -1
+                                example['end_index'] = -1
+                                example['na'] = 0
+                            outf.write(json.dumps(example, ensure_ascii=False) + "\n")
+        print("Skipperd {} question/answers".format(i))
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    build_omer({})
-    # extract_examples()
-    # extract_examples("positive")
+    # build_omer({})
+    extract_examples("positive")
+    extract_examples("negative")
     logging.info("Completed %s", " ".join(sys.argv))

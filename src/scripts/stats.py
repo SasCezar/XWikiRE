@@ -77,7 +77,7 @@ def get_qa_id_itersection():
                     continue
                 for ex in qa[prop]:
                     ex_type = ex['example']
-                    if ex_type == 'positive':
+                    if ex_type == 'negative':
                         qa_ids_per_prop_and_lang[lang][prop].add(ex['id'])
 
     qa_ids_per_prop_combs = defaultdict(lambda: {key: 0 for key in omer_props})
@@ -90,7 +90,7 @@ def get_qa_id_itersection():
             qa_ids_per_prop_combs[comb][prop] = len(elements)
 
     for key in qa_ids_per_prop_combs:
-        with open("{}_qa_intersection.txt".format("-".join(key)), "wt", encoding="utf8") as outf:
+        with open("{}_qa_intersection_neg.txt".format("-".join(key)), "wt", encoding="utf8") as outf:
             writer = csv.writer(outf)
             for prop in qa_ids_per_prop_combs[key]:
                 writer.writerow([prop, qa_ids_per_prop_combs[key][prop]])

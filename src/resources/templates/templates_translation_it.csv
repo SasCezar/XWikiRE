@@ -1,6 +1,6 @@
-﻿Property ID,Property,Original,Google Translate,Human checked
+﻿Property ID,Property                                        ,Original                                                               ,Google Translate                                                          ,Human Translated
 P141,IUCN conservation status,What is the endangered status of XXX?,Qual è lo stato di minaccia di XXX?,Qual è lo stato di minaccia diYYY XXX?
-P141,IUCN conservation status,How endangered does the iucn consider XXX?,In che modo la Iucn in via di estinzione considera XXX?,In che modo la IUCN consdera lo stato di estinzione diYYY XXX?
+P141       ,IUCN conservation status                        ,How endangered does the iucn consider XXX?                             ,In che modo la Iucn in via di estinzione considera XXX?                   ,In che modo la IUCN considera lo stato di estinzione diYYY XXX?
 P141,IUCN conservation status,What is the status of XXX?,Qual è lo stato di XXX?,Qual è lo stato di conservazione diYYY XXX?
 P141,IUCN conservation status,What level is XXX's iucn conservation status?,Quale livello è lo stato di conservazione di Iucn di XXX?,Quale livello è lo stato di conservazione secondo la IUCN diYYY XXX?
 P141,IUCN conservation status,What is the conservation status of XXX?,Qual è lo stato di conservazione di XXX?,Qual è lo stato di conservazione diYYY XXX?
@@ -14,7 +14,7 @@ P113,airline hub,Which airport does XXX operate in?,In quale aeroporto opera XXX
 P113,airline hub,What is the name of the airport where XXX is located?,Qual è il nome dell'aeroporto in cui si trova XXX?,Qual è il nome dell'aeroporto in cui si trova XXX?
 P113,airline hub,At what airport can you find XXX?,In quale aeroporto puoi trovare XXX?,In quale aeroporto puoi trovare XXX?
 P113,airline hub,Which airport is most closely associated with XXX?,Quale aeroporto è più strettamente associato a XXX?,
-P113,airline hub,What is the name of the airport associated with XXX?,Qual è il nome dell'aeroporto associato a XXX?,Qual è il nome dell'aeroporto associata XXX?
+P113       ,airline hub                                     ,What is the name of the airport associated with XXX?                   ,Qual è il nome dell'aeroporto associato a XXX?                            ,Qual è il nome dell'aeroporto con cui è affiliata XXX?
 P113,airline hub,Which airline hub does XXX operate out of?,Da quale aeroporto di linea aerea opera XXX?,
 P84,architect,Who was the architect involved with XXX?,Chi era l'architetto coinvolto con XXX?,
 P84,architect,Who was XXX designed by?,Chi è stato disegnato da XXX?,
@@ -91,7 +91,7 @@ P161,cast member,Who is in XXX as a cast member?,Chi è in XXX come membro del c
 P161,cast member,Who has acted in the comedy film XXX?,Chi ha recitato nel film commedia XXX?,
 P161,cast member,Who are the stars of the film XXX?,Chi sono le stelle del film XXX?,Chi sono le stelle del cinema del film XXX?
 P161,cast member,Who acted in XXX?,Chi ha recitato in XXX?,Chi ha recitato in XXX?
-P161,cast member,Who was the star of XXX?,Chi era la stella di XXX?,Chi era la celebrita in XXX?
+P161       ,cast member                                     ,Who was the star of XXX?                                               ,Chi era la stella di XXX?                                                 ,Chi era la celebrità in XXX?
 P161,cast member,Who are the cast members of XXX?,Chi sono i membri del cast di XXX?,Chi sono i membri del cast di XXX?
 P161,cast member,What cast members where in XXX?,Quali membri del cast sono presenti in XXX?,
 P161,cast member,"In the film XXX, who was the star?","Nel film XXX, chi era la stella?","Nel film XXX, chi era la stella del cinema?"
@@ -105,7 +105,7 @@ P509,cause of death,The cause of death of XXX is what?,La causa della morte di X
 P509,cause of death,What caused XXX's death?,Cosa ha causato la morte di XXX?,Cosa ha causato la morte di XXX?
 P509,cause of death,What was the cause of death for XXX?,Qual è stata la causa della morte per XXX?,
 P509,cause of death,What was XXX cause of death?,Qual è stata la causa della morte XXX?,
-P509,cause of death,What medical condition killed XXX?,Quali condizioni mediche hanno ucciso XXX?,Quali condizioni mediche hanno ucciso XXX?
+P509       ,cause of death                                  ,What medical condition killed XXX?                                     ,Quali condizioni mediche hanno ucciso XXX?                                ,Quale malattia ha ucciso XXX?
 P509,cause of death,What is the cause of death of XXX?,Qual è la causa della morte di XXX?,
 P509,cause of death,What did XXX die from?,Da cosa è morto XXX?,
 P509,cause of death,The cause of death for XXX was what?,La causa della morte per XXX era cosa?,
@@ -120,7 +120,7 @@ P509,cause of death,What disease did XXX have?,Che malattia ha avuto XXX?,Che ma
 P509,cause of death,What did XXX die of?,Di cosa è morto XXX?,
 P509,cause of death,The disease that XXX died of was what?,La malattia di cui è morto XXX è stato?,
 P488,chairperson,Who led XXX?,Chi ha guidato XXX?,Chi ha diretto XXX?
-P674,characters,The XXX has what character?,Il XXX ha quale personaggio?,Chi è un personaggio diYYY XXX?
+P674       ,characters                                      ,The XXX has what character?                                            ,Il XXX ha quale personaggio?                                              ,Qual è un personaggio diYYY XXX?
 P40,child,Who is the offspring of XXX?,Chi è la progenie di XXX?,Chi è la progenie di XXX?
 P40,child,What was XXX's child's name?,Qual era il nome del bambino di XXX?,Qual era il nome del bambino di XXX?
 P1057,chromosome,What is the name of the chromosome where you can find XXX?,Qual è il nome del cromosoma in cui puoi trovare XXX?,Qual è il nome del cromosoma in cui puoi trovare YYY XXX?
@@ -267,7 +267,7 @@ P495,country of origin,Which was the country for XXX?,Quale era il paese per XXX
 P495,country of origin,What is the country XXX is from?,Qual è il paese da cui proviene XXX?,Qual è il paese da cui proviene XXX?
 P495,country of origin,What country released XXX?,Quale paese ha pubblicato XXX?,
 P495,country of origin,What country did XXX originate?,Quale nazione ha avuto origine XXX?,
-P170,creator,Which was the creator of XXX?,Qual è stato il creatore di XXX?,Qual è stato il creatore diYYY XXX?
+P170       ,creator                                         ,Which was the creator of XXX?                                          ,Qual è stato il creatore di XXX?                                          ,Chi è stato il creatore diYYY XXX?
 P170,creator,The artwork XXX was by who?,L'opera d'arte XXX era di chi?,Chi è l'autore dell'opera d'arte YYY XXX?
 P170,creator,Who developed XXX?,Chi ha sviluppato XXX?,Chi ha sviluppato YYY XXX?
 P170,creator,The XXX was made by whom?,Il XXX è stato creato da chi?,
@@ -503,7 +503,7 @@ P115,home venue,In what stadium does XXX play home games?,In quale stadio XXX gi
 P115,home venue,Where does XXX play home games?,Dove XXX gioca a casa?,
 P115,home venue,Where did XXX play home games?,Dove ha giocato XXX i giochi casalinghi?,
 P115,home venue,Where did XXX play their home games?,Dove hanno giocato le partite casalinghe di XXX?,
-P115,home venue,What is the home venue of XXX?,Qual è la sede di casa di XXX?,Qual è la sede di casa diYYY XXX?
+P115       ,home venue                                      ,What is the home venue of XXX?                                         ,Qual è la sede di casa di XXX?                                            ,Qual è la sede diYYY XXX?
 P115,home venue,Where does XXX play its game?,Dove gioca XXX?,
 P115,home venue,What is the home ground of XXX?,Qual è il terreno di casa di XXX?,
 P115,home venue,What place did XXX play home games at?,In che posto è stata la XXX a giocare a casa?,
@@ -668,13 +668,13 @@ P176,manufacturer,The manufacturer of XXX was who?,Il produttore di XXX era chi?
 P176,manufacturer,"By which company, XXX has been manufactured?","Con quale società, XXX è stato fabbricato?",
 P186,material used,What material was used for XXX?,Che materiale è stato utilizzato per XXX?,
 P186,material used,What is the surface of XXX made of?,Di cosa è fatta la superficie di XXX?,
-P1050,medical condition,What medical condition did XXX have at the end of his life?,Quali condizioni mediche ha avuto XXX alla fine della sua vita?,Quali condizioni mediche ha avuto XXX alla fine della sua vita?
+P1050      ,medical condition                               ,What medical condition did XXX have at the end of his life?            ,Quali condizioni mediche ha avuto XXX alla fine della sua vita?           ,Quali erano le condizioni mediche di XXX alla fine/termine della sua vita?
 P1050,medical condition,What disease caused the death of XXX?,Quale malattia ha causato la morte di XXX?,Quale malattia ha causato la morte di XXX?
 P1050,medical condition,What was XXX's medical condition near the end of his life?,Qual era la condizione medica di XXX verso la fine della sua vita?,Qual era la condizione medica di XXX verso la fine della sua vita?
 P1050,medical condition,Which medical condition does XXX suffer from?,Di quali condizioni mediche soffre XXX?,Di quali condizioni mediche soffre XXX?
 P1050,medical condition,What illness did XXX suffer from?,Di quale malattia ha sofferto XXX?,Di quale malattia ha sofferto XXX?
-P1050,medical condition,What medical condition did XXX have?,Quali condizioni mediche ha avuto XXX?,Quali condizioni mediche ha avuto XXX?
-P1050,medical condition,What medical condition does XXX have?,Quali condizioni mediche ha XXX?,Quali condizioni mediche ha XXX?
+P1050      ,medical condition                               ,What medical condition did XXX have?                                   ,Quali condizioni mediche ha avuto XXX?                                    ,Quali erano le condizioni mediche di XXX?
+P1050      ,medical condition                               ,What medical condition does XXX have?                                  ,Quali condizioni mediche ha XXX?                                          ,Quali sono le condizioni mediche di XXX?
 P1050,medical condition,What led to XXX's death?,Cosa ha portato alla morte di XXX?,Cosa ha portato alla morte di XXX?
 P1050,medical condition,What was the sickness that killed XXX?,Qual è stata la malattia che ha ucciso XXX?,Qual è stata la malattia che ha ucciso XXX?
 P1050,medical condition,What disease did XXX contract?,Che malattia ha contratto XXX?,Che malattia ha contratto XXX?
@@ -757,7 +757,7 @@ P138,named after,Whom is XXX named after?,Di chi è il nome XXX?,Qual è l'origi
 P138,named after,The XXX was named for whom?,Il XXX è stato nominato per chi?,
 P840,narrative location,Which place is XXX in?,Quale posto è in XXX?,Dove ha luogo YYY XXX?
 P840,narrative location,Which place does XXX exist in?,In quale posto esiste XXX?,Qual è l'ambientazione diYYY XXX?
-P103,native language,What was the native language of XXX?,Qual è stata la lingua madre di XXX?,Qual è stata la lingua madre di XXX?
+P103       ,native language                                 ,What was the native language of XXX?                                   ,Qual è stata la lingua madre di XXX?                                      ,Qual è la lingua madre di XXX?
 P103,native language,What nationality was XXX?,Di che nazionalità era XXX?,Qual è la nazionalita di XXX?
 P103,native language,What is the native tongue of XXX?,Qual è la lingua madre di XXX?,Qual è la lingua madre di XXX?
 P103,native language,What is the language of XXX?,Qual è la lingua di XXX?,Qual è la lingua di XXX?
@@ -781,7 +781,7 @@ P306,operating system,What is the operating system used with XXX?,Qual è il sis
 P449,original network,What original network is XXX on?,In quale rete originale è attivo XXX?,
 P449,original network,What broadcasting company aired XXX?,Quale emittente ha trasmesso XXX?,Quale emittente ha trasmesso YYY XXX?
 P449,original network,On what channel did XXX first air?,Su quale canale ha fatto la prima aria XXX?,Su quale canale ha fatto la prima apparizione YYY XXX?
-P449,original network,What is the original channel that XXX played on?,Qual è il canale originale su cui ha giocato XXX?,Qual è il canale su cui è stato strasmesso per la prima volta YYY XXX?
+P449       ,original network                                ,What is the original channel that XXX played on?                       ,Qual è il canale originale su cui ha giocato XXX?                         ,Qual è il canale su cui è stato trasmesso per la prima volta YYY XXX?
 P449,original network,Who broadcasted XXX?,Chi ha trasmesso XXX?,Chi ha trasmesso YYY XXX?
 P449,original network,Which was the network that originally hosted XXX?,Qual era la rete che ospitava originariamente XXX?,
 P449,original network,Which network plays XXX?,Quale rete riproduce XXX?,
@@ -844,8 +844,8 @@ P175,performer,What was XXX's performers name?,Qual è il nome degli artisti di 
 P175,performer,What is the name of the performer that released the album XXX?,Qual è il nome del performer che ha pubblicato l'album XXX?,
 P175,performer,What artist released XXX?,Quale artista ha pubblicato XXX?,Quale artista ha pubblicato XXX?
 P175,performer,To which performer does the album XXX belong?,A quale esecutore appartiene l'album XXX?,
-P175,performer,Who was the performer of XXX?,Chi era il performer di XXX?,Chi era il performer di XXX?
-P175,performer,Who is the performer of XXX?,Chi è il performer di XXX?,Chi è il performer di XXX?
+P175       ,performer                                       ,Who was the performer of XXX?                                          ,Chi era il performer di XXX?                                              ,Chi era l'interprete di XXX?
+P175       ,performer                                       ,Who is the performer of XXX?                                           ,Chi è il performer di XXX?                                                ,Chi è l'interprete di XXX?
 P175,performer,The song or album XXX came from which artiste?,La canzone o l'album XXX è venuto da quale artista?,
 P175,performer,Who is the artist of XXX?,Chi è l'artista di XXX?,Chi è l'artista di XXX?
 P175,performer,Who performed XXX?,Chi ha interpretato XXX?,
@@ -946,7 +946,7 @@ P1056,product,What product does XXX make?,Che prodotto fa XXX?,Che prodotto fa X
 P1056,product,The product of XXX is what?,Il prodotto di XXX è cosa?,
 P272,production company,What production company or companies created XXX?,Quale azienda o società di produzione ha creato XXX?,Quale azienda o società di produzione ha creato XXX?
 P272,production company,What production company was involved in XXX?,Quale società di produzione è stata coinvolta in XXX?,
-P272,production company,Which production company is involved with XXX?,Quale società di produzione è coinvolta con XXX?,Quale società di produzione è coinvolta con XXX?
+P272       ,production company                              ,Which production company is involved with XXX?                         ,Quale società di produzione è coinvolta con XXX?                          ,Quale società di produzione è coinvolta in XXX?
 P272,production company,What studio produced XXX?,Quale studio ha prodotto XXX?,Quale studio ha prodotto XXX?
 P272,production company,The production company responsible for XXX is what?,La società di produzione responsabile di XXX è cosa?,
 P277,programming language,Which programming language is XXX written in?,In quale linguaggio di programmazione è scritto XXX?,In quale linguaggio di programmazione è scritto XXX?
