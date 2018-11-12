@@ -36,7 +36,9 @@ def get_qa_intersection(languages):
     for language in languages:
         print("Loading '{}'".format(language))
         entities = get_qa_ids("{}_qa_positive.json".format(language))
+        print("Loaded {} positive".format(len(entities)))
         nentities = get_qa_ids("{}_qa_negative.json".format(language))
+        print("Loaded {} positive".format(len(nentities)))
         entities.update(nentities)
         print("Size of '{}' is {}".format(language, len(entities)))
         languages_qas[language] = entities
