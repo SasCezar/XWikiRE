@@ -119,11 +119,9 @@ def split_entity():
     pool = set(copy.deepcopy(qas_intersection))
     used = set()
     used_all = set()
-    examples = defaultdict(set)
     for set_name, count in [('test', 10000), ('dev', 2000), ('train', -1)]:
         print("Starting: {}".format(set_name))
         used_entities, set_ids = random_sample_QAs(pool, count, used_all)
-        examples[set_name].add(set_ids)
         if set_name != 'train':
             used.update(used_entities)
         used_all.update(used_entities)
@@ -133,13 +131,11 @@ def split_entity():
     print("Used: {} entities".format(len(used)))
     print("Used all: {} entities".format(len(used_all)))
 
-    examples = defaultdict(set)
     for language in languages:
         lang_pool = {x for x in language_qas[language] if x[0] not in used}
         print("Language {} pool size = {}".format(language, len(lang_pool)))
         used_entities, set_ids = random_sample_QAs(lang_pool, 1000000, used)
         write_set_ids(set_ids, "{}_{}_set.txt".format(language, "train"))
-        examples[language].add(set_ids)
 
 
 split_entity()
