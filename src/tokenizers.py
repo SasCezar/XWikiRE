@@ -37,8 +37,8 @@ class SpacyTokenizer(TokenizerI):
         for token in filtered_tokens:
             element = token + "\n" if token in self.SENTENCE_BREAKS else token
             pos_tagger_seq.append(element)
-        if len(filtered_tokens) != len(break_levels):
-            print(repr(text))
+        # if len(filtered_tokens) != len(break_levels):
+        #    print(repr(text))
         # assert len(filtered_tokens) == len(break_levels)
         return filtered_tokens, break_levels, pos_tagger_seq
 

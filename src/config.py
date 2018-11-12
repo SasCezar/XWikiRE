@@ -3,10 +3,10 @@ import os
 from date_formatter import DateFormatterFactory
 from tokenizers import SpacyTokenizer
 
-LANG = 'it'
-LOCALE = 'it-IT'
+LANG = 'de'
+LOCALE = 'de-DE'
 
-NUM_WORKERS = 6
+NUM_WORKERS = 5
 CHUNK_SIZE = 1000
 
 MONGO_IP = "localhost"
