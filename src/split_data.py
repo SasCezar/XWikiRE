@@ -1,6 +1,7 @@
 import copy
 import csv
 import json
+import random
 from collections import defaultdict, Counter
 
 
@@ -33,6 +34,7 @@ def get_qa_ids(file):
 def get_qa_intersection(languages):
     languages_qas = {lang: set() for lang in languages}
     for language in languages:
+        print("Loading '{}'".format(language))
         entities = get_qa_ids("{}_qa_positive.json".format(language))
         nentities = get_qa_ids("{}_qa_negative.json".format(language))
         entities.update(nentities)
@@ -174,9 +176,55 @@ def check_duplicates():
 check_duplicates()
 
 
+def load_qas(file):
+    with open(file, "rt", encoding="utf8") as inf:
+        qas = defaultdict(list)
+        for line in inf:
+            qa = json.loads(line)
+            qa_id = qa['id']
+            qas[qa_id].append(qa)
+
+    return qas
+
+
+def read_set_qas(file):
+    ids = set()
+    with open(file, "rt", encoding="utf8") as inf:
+        reader = csv.reader(inf, delimiter="\t")
+        for _, qa_id, _ in reader:
+            ids.add(qa_id)
+
+    return ids
+
+
 def extract_datasets():
     sets = ['test', 'dev', 'train']
-    files = {}
-    p_test = "parallel_it-en_test_set.txt"
-    p_def = "parallel_it-en_test_set.txt"
-    p_test = "parallel_it-en_test_set.txt"
+
+    languages = ['it', 'en']
+    lang_qas = {}
+    for lang in languages:
+        qas = load_qas("{}_qa_positive.json")
+        qas.update(load_qas("{}_qa_positive.json"))
+        lang_qas[lang] = qas
+
+    for set_type in sets:
+        set_qas = read_set_qas("parallel_{}_{}_set.txt".format("-".format(languages), set_type))
+        for language in languages:
+            with open("qas_{}_parallel_{}_{}_set.txt".format(language, "-".format(languages), set_type), "wt",
+                      encoding="utf8") as outf:
+                for qid in set_qas:
+                    random_qa_template = random.choice(lang_qas[language][qid])
+                    string_qa = json.dumps(random_qa_template, ensure_ascii=False)
+                    outf.write(string_qa + "\n")
+
+        for language in languages:
+            set_qas = read_set_qas("{}_train_set.txt".format(language))
+            with open("qas_{}_{}_train_set.txt".format(language, "-".format(languages)), "wt",
+                      encoding="utf8") as outf:
+                for qid in set_qas:
+                    random_qa_template = random.choice(lang_qas[language][qid])
+                    string_qa = json.dumps(random_qa_template, ensure_ascii=False)
+                    outf.write(string_qa + "\n")
+
+
+extract_datasets()
