@@ -240,7 +240,7 @@ def extract_examples(example_type):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.OMERMERGE_COLLECTION]
-    documents = wikipedia.find({}, {"QA": 1, "label": 1, "entity_article": 1, "_id": 0})
+    documents = wikipedia.find({}, {"QA": 1, "id": 1, "label": 1, "entity_article": 1, "_id": 0})
 
     omer_props = set()
     with open("C:\\Users\sasce\PycharmProjects\WikiReading\src\\resources\omer_prop_id.txt", "rt",
@@ -267,7 +267,7 @@ def extract_examples(example_type):
                                                             article=document['entity_article'])
                             example = {'context': qa['sentence'], 'id': qa['id'], 'prop_id': qa['prop_id'],
                                        'property': qa['relation'], 'template': template, 'entity': document['label'],
-                                       'answer': qa['answer'], 'question': question}
+                                       'answer': qa['answer'], 'question': question, 'entity_id': document['id']}
                             if example_type == "positive":
                                 try:
                                     context = example['context']
