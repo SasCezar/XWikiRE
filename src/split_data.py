@@ -1,7 +1,6 @@
 import copy
 import csv
 import json
-import random
 from collections import defaultdict, Counter
 
 
@@ -38,7 +37,7 @@ def get_qa_intersection(languages):
         entities = get_qa_ids("{}_qa_positive.json".format(language))
         print("Loaded {} positive".format(len(entities)))
         nentities = get_qa_ids("{}_qa_negative.json".format(language))
-        print("Loaded {} positive".format(len(nentities)))
+        print("Loaded {} negative".format(len(nentities)))
         entities.update(nentities)
         print("Size of '{}' is {}".format(language, len(entities)))
         languages_qas[language] = entities
@@ -51,15 +50,15 @@ def get_qa_intersection(languages):
     return intersection, languages_qas
 
 
-def random_sample_QAs(pool, size, seen_entities=None, balance=True):
+def random_sample_QAs(pool, size, seen_entities=None, balance=True, keep_all=False):
     if seen_entities is None:
         seen_entities = set()
     example_count = {1: 0, 0: 0}
     examples = defaultdict(set)
     entities = set()
     for entity_id, question_id, example_type in pool:
-        if entity_id not in entities and entity_id not in seen_entities and (
-                size < 0 or example_count[example_type] < size / 2):
+        if entity_id not in seen_entities and (keep_all or (entity_id not in entities and (
+                size < 0 or example_count[example_type] < size / 2))):
             example_count[example_type] += 1
             examples[example_type].add((entity_id, question_id, example_type))
             entities.add(entity_id)
@@ -67,10 +66,9 @@ def random_sample_QAs(pool, size, seen_entities=None, balance=True):
             if len(entities) == size:
                 qas = copy.deepcopy(examples[0])
                 qas.update(examples[1])
-                assert len(qas) == len(entities)
                 return entities, qas
 
-    if balance and False:
+    if balance:
         sizes = [example_count[0], example_count[1]]
         min_size = min(sizes)
         min_item = sizes.index(min_size)
@@ -82,7 +80,6 @@ def random_sample_QAs(pool, size, seen_entities=None, balance=True):
 
     qas = copy.deepcopy(examples[0])
     qas.update(examples[1])
-    assert len(qas) == len(entities)
     return entities, qas
 
 
@@ -121,13 +118,13 @@ def split_entity():
     pool = set(copy.deepcopy(qas_intersection))
     used = set()
     used_all = set()
-    for set_name, count in [('test', 10000), ('dev', 2000), ('train', -1)]:
+    for set_name, count, keep_all in [('test', 10000, False), ('dev', 2000, False), ('train', 1000000, True)]:
         print("Starting: {}".format(set_name))
-        used_entities, set_ids = random_sample_QAs(pool, count, used_all)
+        used_entities, set_ids = random_sample_QAs(pool, count, used_all, keep_all=keep_all)
         if set_name != 'train':
             used.update(used_entities)
         used_all.update(used_entities)
-        write_set_ids(set_ids, "parallel_{}_{}_set.txt".format("-".join(languages), set_name))
+        write_set_ids(set_ids, "parallel_ids_{}_{}_set.txt".format("-".join(languages), set_name))
         print("Processed: {}".format(set_name))
 
     print("Used: {} entities".format(len(used)))
@@ -136,23 +133,23 @@ def split_entity():
     for language in languages:
         lang_pool = {x for x in language_qas[language] if x[0] not in used}
         print("Language {} pool size = {}".format(language, len(lang_pool)))
-        used_entities, set_ids = random_sample_QAs(lang_pool, 1000000, used)
-        write_set_ids(set_ids, "{}_{}_set.txt".format(language, "train"))
+        used_entities, set_ids = random_sample_QAs(lang_pool, 1000000, used, keep_all=True)
+        write_set_ids(set_ids, "ids_{}_{}_set.txt".format(language, "train"))
 
 
-# split_entity()
+split_entity()
 
 
 def check_duplicates():
     seen = set()
     test_seen = set()
     for set_typ in ['test', 'train', 'dev']:
-
-        with open("parallel_it-en_{}_set.txt".format(set_typ), "rt", encoding="utf8") as inf:
+        filename = "parallel_ids_it-en_{}_set.txt".format(set_typ)
+        with open(filename, "rt", encoding="utf8") as inf:
             reader = csv.reader(inf, delimiter="\t")
             for eid, _, _ in reader:
                 if eid in seen:
-                    print(set_typ)
+                    print("Error in {} - Duplicate item id {}".format(filename, eid))
                 else:
                     seen.add(eid)
                     if set_typ != 'train':
@@ -160,18 +157,17 @@ def check_duplicates():
 
     for lang in ['it', 'en']:
         cpy_seen = copy.deepcopy(test_seen)
-        with open("{}_train_set.txt".format(lang), "rt", encoding="utf8") as inf:
+        filename = "{}_train_set.txt".format(lang)
+        with open(filename, "rt", encoding="utf8") as inf:
             reader = csv.reader(inf, delimiter="\t")
             for eid, _, _ in reader:
                 if eid in cpy_seen:
-                    print("Error {}".format(lang))
+                    print("Error in {} - Duplicate item id {}".format(filename, eid))
                 else:
                     cpy_seen.add(eid)
 
     print(len(seen))
 
-
-check_duplicates()
 
 
 def load_qas(file, ids):
@@ -204,33 +200,32 @@ def extract_datasets():
 
     ids = set()
     for set_type in sets:
-        ids.update(read_set_qas("parallel_{}_{}_set.txt".format("-".join(languages), set_type)))
+        ids.update(read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type)))
 
     for lang in languages:
         print("Loading '{}'".format(lang))
         qas = load_qas("{}_qa_positive.json".format(lang), ids)
-        print("Loaded positive".format(lang))
         qas.update(load_qas("{}_qa_negative.json".format(lang), ids))
         lang_qas[lang] = qas
         print("Loaded '{}'".format(lang))
 
     for set_type in sets:
-        set_qas = read_set_qas("parallel_{}_{}_set.txt".format("-".join(languages), set_type))
+        set_qas = read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type))
         for language in languages:
-            with open("qas_{}_parallel_{}_{}_set.txt".format(language, "-".join(languages), set_type), "wt",
+            with open("qas_{}_parallel_{}_{}_set.json".format(language, "-".join(languages), set_type), "wt",
                       encoding="utf8") as outf:
                 for qid in set_qas:
                     for template in lang_qas[language][qid]:
                         string_qa = json.dumps(template, ensure_ascii=False)
                         outf.write(string_qa + "\n")
 
-        for language in languages:
-            set_qas = read_set_qas("{}_train_set.txt".format(language))
-            with open("qas_{}_{}_train_set.txt".format(language, "-".join(languages)), "wt",
-                      encoding="utf8") as outf:
-                for qid in set_qas:
-                    random_qa_template = random.choice(lang_qas[language][qid])
-                    string_qa = json.dumps(random_qa_template, ensure_ascii=False)
+    for language in languages:
+        set_qas = read_set_qas("{}_train_set.txt".format(language))
+        with open("qas_{}_train_set.json".format(language), "wt",
+                  encoding="utf8") as outf:
+            for qid in set_qas:
+                for template in lang_qas[language][qid]:
+                    string_qa = json.dumps(template, ensure_ascii=False)
                     outf.write(string_qa + "\n")
 
 
