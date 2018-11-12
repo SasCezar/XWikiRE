@@ -138,7 +138,7 @@ def split_entity():
         write_set_ids(set_ids, "{}_{}_set.txt".format(language, "train"))
 
 
-split_entity()
+# split_entity()
 
 
 def check_duplicates():
@@ -172,13 +172,14 @@ def check_duplicates():
 check_duplicates()
 
 
-def load_qas(file):
+def load_qas(file, ids):
     with open(file, "rt", encoding="utf8") as inf:
         qas = defaultdict(list)
         for line in inf:
             qa = json.loads(line)
             qa_id = qa['id']
-            qas[qa_id].append(qa)
+            if qa_id in ids:
+                qas[qa_id].append(qa)
 
     return qas
 
@@ -198,24 +199,32 @@ def extract_datasets():
 
     languages = ['it', 'en']
     lang_qas = {}
+
+    ids = set()
+    for set_type in sets:
+        ids.update(read_set_qas("parallel_{}_{}_set.txt".format("-".join(languages), set_type)))
+
     for lang in languages:
-        qas = load_qas("{}_qa_positive.json")
-        qas.update(load_qas("{}_qa_positive.json"))
+        print("Loading '{}'".format(lang))
+        qas = load_qas("{}_qa_positive.json".format(lang), ids)
+        print("Loaded positive".format(lang))
+        qas.update(load_qas("{}_qa_negative.json".format(lang), ids))
         lang_qas[lang] = qas
+        print("Loaded '{}'".format(lang))
 
     for set_type in sets:
-        set_qas = read_set_qas("parallel_{}_{}_set.txt".format("-".format(languages), set_type))
+        set_qas = read_set_qas("parallel_{}_{}_set.txt".format("-".join(languages), set_type))
         for language in languages:
-            with open("qas_{}_parallel_{}_{}_set.txt".format(language, "-".format(languages), set_type), "wt",
+            with open("qas_{}_parallel_{}_{}_set.txt".format(language, "-".join(languages), set_type), "wt",
                       encoding="utf8") as outf:
                 for qid in set_qas:
-                    random_qa_template = random.choice(lang_qas[language][qid])
-                    string_qa = json.dumps(random_qa_template, ensure_ascii=False)
-                    outf.write(string_qa + "\n")
+                    for template in lang_qas[language][qid]:
+                        string_qa = json.dumps(template, ensure_ascii=False)
+                        outf.write(string_qa + "\n")
 
         for language in languages:
             set_qas = read_set_qas("{}_train_set.txt".format(language))
-            with open("qas_{}_{}_train_set.txt".format(language, "-".format(languages)), "wt",
+            with open("qas_{}_{}_train_set.txt".format(language, "-".join(languages)), "wt",
                       encoding="utf8") as outf:
                 for qid in set_qas:
                     random_qa_template = random.choice(lang_qas[language][qid])
