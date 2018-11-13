@@ -125,7 +125,7 @@ def build(limit, configs):
         # text = text.translate(table).strip()
         # text = re.sub("(\n|\s){2,}", "\n\n", text)
         # text = re.sub("\n{3,}", "\n\n", text)
-        sentences = nltk.tokenize.sent_tokenize(text, language='english')
+        sentences = nltk.tokenize.sent_tokenize(text, language='french')
         omer_doc = {"id": page['id'], "string_sequence": page['string_sequence'],
                     "text": page['text'],
                     "label_sequence": page['label_sequence'], "label": page['label'], 'QA': {},
@@ -294,7 +294,7 @@ def extract_examples(example_type):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    # build_omer({})
-    extract_examples("positive")
-    extract_examples("negative")
+    build_omer({})
+    # extract_examples("positive")
+    # extract_examples("negative")
     logging.info("Completed %s", " ".join(sys.argv))
