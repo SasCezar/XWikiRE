@@ -40,6 +40,14 @@ class FrenchArticleExtractor(ArticleExtractorI):
             ["\\b" + article + "\\b" for article in self._articles]) + ")(\s?|\'){}"
 
 
+class GermanArticleExtractor(ArticleExtractorI):
+    def __init__(self):
+        super().__init__()
+        self.articles = ['Der', 'Die', 'Das', 'Ein', 'Eine']
+        self._re_template = "(?P<article>" + "|".join(
+            ["\\b" + article + "\\b" for article in self._articles]) + ")(\s){}"
+
+
 class ArticleExtractorFactory(object):
     @staticmethod
     def make_extractor(lang):

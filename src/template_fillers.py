@@ -71,6 +71,19 @@ class FrenchTemplateFiller(TemplateFillerI):
         self._finder = re.compile(self._template, re.IGNORECASE)
 
 
+class GermanTemplateFiller(TemplateFillerI):
+    def fill(self, template: str, entity: str, **kwargs):
+        article = kwargs['article'].lower()
+
+        article_in_entity = True if entity.lower().startswith(article) else False
+        if article_in_entity:
+            article = ""
+        template = re.sub("YYY(a|d|g)", article, template)
+        template = template.replace("XXX", entity)
+
+        return template
+
+
 class TemplateFillerFactory(object):
     @staticmethod
     def make_filler(lang):
@@ -78,3 +91,5 @@ class TemplateFillerFactory(object):
             return TemplateFillerI()
         if lang == "it":
             return ItalianTemplateFiller()
+        if lang == "de":
+            return GermanTemplateFiller()
