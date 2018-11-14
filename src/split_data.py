@@ -201,6 +201,9 @@ def extract_entity_split_datasets():
         ids.update(read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type)))
 
     for lang in languages:
+        ids.update(read_set_qas("ids_{}_train_set.txt".format(lang)))
+
+    for lang in languages:
         logging.info("Loading '{}'".format(lang))
         qas = load_qas("{}_qa_positive.json".format(lang), ids)
         qas.update(load_qas("{}_qa_negative.json".format(lang), ids))
