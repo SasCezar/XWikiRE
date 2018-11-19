@@ -221,5 +221,13 @@ class TestRomanFormatterMethods(unittest.TestCase):
         formatted = formatter.format(date, precision)
         self.assertEquals(formatted, "siglo IX a. C.")
 
+class TestKannadaDateFormatter(unittest):
+    def test_century(self):
+        formatter = KannadaDateFormatter(lang="fr", out_locale='fr-FR')
+        precision = 7
+
+        date = "+00000001900-01-01T00:00:00Z"
+        formatted = formatter.format(date, precision)
+
 if __name__ == '__main__':
     unittest.main()
