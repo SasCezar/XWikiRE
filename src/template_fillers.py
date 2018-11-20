@@ -63,12 +63,15 @@ class ItalianTemplateFiller(TemplateFillerI):
 
 class FrenchTemplateFiller(TemplateFillerI):
     def __init__(self):
-        self._reduction_rules = {'dele': 'du', 'dela': 'de la', 'del': 'de l\'', 'deles': 'des',
-                                 'àle': 'au', 'àla': 'à la', 'àl': 'à l\'', 'àles': 'aux'}
+        self._vowels = {'a', 'e', 'i', 'o', 'u', 'â', 'ê', 'î', 'ô', 'û', 'ë', 'ï', 'ü', 'y', 'ÿ', 'à', 'è', 'ù', 'é'}
 
-        self._template = "(?P<preposition>" + "|".join(["\\b" + preposition + "\\b"
-                                                        for preposition in self._reduction_rules.keys()]) + ")"
-        self._finder = re.compile(self._template, re.IGNORECASE)
+    def fill(self, template: str, entity: str, **kwargs):
+        if re.search("de\sXXX", template) and entity[0].lower() in self._vowels:
+            template = re.sub("de\sXXX", "d'", template)
+
+        template = template.replace("XXX", entity)
+        template = re.sub("\s{2,}", " ", template)
+        return template
 
 
 class GermanTemplateFiller(TemplateFillerI):
@@ -78,8 +81,36 @@ class GermanTemplateFiller(TemplateFillerI):
         article_in_entity = True if entity.lower().startswith(article) else False
         if article_in_entity:
             article = ""
-        template = re.sub("YYY(a|d|g)", article, template)
+        template = re.sub("YYY", article, template)
         template = template.replace("XXX", entity)
+        template = re.sub("\s{2,}", " ", template).capitalize()
+
+        return template
+
+
+class SpanishTemplateFiller(TemplateFillerI):
+    def __init__(self):
+        self._articles_gender = {'el': 'o', 'la': 'a', 'los': 'es', 'las': 'as'}
+
+    def fill(self, template: str, entity: str, **kwargs):
+        article = kwargs['article'].lower()
+        article_in_entity = True if entity.lower().startswith(article) else False
+        skip = False
+        if article_in_entity and not re.search("(de)YYY", template):
+            skip = True
+
+        if article and not skip:
+            if article == "el" and re.search("(de)YYY", template):
+                template = template.replace("deYYY", 'del')
+            else:
+                template = template.replace("YYY", " " + article)
+        else:
+            template = template.replace("YYY", "")
+
+        gender = self._articles_gender.get(article, 'o')
+        template = template.replace("GGG", gender)
+        template = template.replace("XXX", entity)
+        template = re.sub("\s{2,}", " ", template)
 
         return template
 
@@ -93,3 +124,9 @@ class TemplateFillerFactory(object):
             return ItalianTemplateFiller()
         if lang == "de":
             return GermanTemplateFiller()
+        if lang == "es":
+            return SpanishTemplateFiller()
+        if lang == "fr":
+            return FrenchTemplateFiller()
+
+        return TemplateFillerI()
