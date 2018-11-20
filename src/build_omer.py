@@ -191,7 +191,7 @@ def read_questions_templates(path):
         reader = csv.reader(inf, delimiter=",")
         for pid, relation, eng, google, template in reader:
             if template.strip():
-                templates[pid].add(template.strip())
+                templates[pid.strip()].add(template.strip())
     return templates
 
 
