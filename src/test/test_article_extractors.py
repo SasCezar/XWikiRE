@@ -1,6 +1,6 @@
 import unittest
 
-from article_extractors import ItalianArticleExtractor
+from article_extractors import ItalianArticleExtractor, GermanArticleExtractor, SpanishArticleExtractor
 
 
 class TestItalianArticleExtractor(unittest.TestCase):
@@ -126,3 +126,28 @@ altri oggetti. """
 
         article = extractor.extract(text, "Astronomia")
         self.assertEqual("L", article)
+
+
+class TestGermanArticleExtractor(unittest.TestCase):
+    def test_article(self):
+        text = "Die Hunde (Canidae) sind eine Familie innerhalb der Überfamilie der Hundeartigen (Canoidea). Zu den Hunden gehören beispielsweise die Füchse, verschiedene als „Schakal“ bezeichnete Arten, Kojoten und Wölfe, deren domestizierte Formen, die Haushunde, als Namensgeber für die Gruppe dienten."
+        entity = "Hunde"
+        extractor = GermanArticleExtractor()
+        article = extractor.extract(text, entity)
+        self.assertEqual(article.lower(), 'die')
+
+
+class TestSpanishArticleExtractor(unittest.TestCase):
+    def test_article(self):
+        text = """Los diplúridos (Dipluridae) son una familia de arañas del suborden Mygalomorphae, única representante de la superfamilia de los dipluroideos (Dipluroidea).​ En inglés se conocen como funnel-web tarantulas, que puede traducirse como  araña tela de embudo.  Este grupo de arañas tienen dos pares de filotráqueas o pulmones laminares, y quelíceros (colmillos) que al moverse de arriba abajo les sirven para apuñalar a sus presas. Antes se incluía en esta familia a Atrax robustus, aunque ahora se clasifica en la familia Hexathelidae.Los miembros de esta familia suelen elaborar sus telarañas en forma de túneles o embudos. Algunos construyen madrigueras forradas de seda en vez de telarañas propiamente dichas (Diplura, Trechona, algunas especies de Linothele). Generalmente construyen sus refugios en grietas del suelo, en la corteza de los árboles, bajo los troncos o en camas de hojas.​Los diplúridos se encuentran en casi cualquier ecosistema tropical del planeta. La mayoría en América del Sur y Central. Muchos en la región Australiana. El género Indothele se  encuentra en India y Sri Lanka. Ischnothele es una género neotropical, pero una de sus especies reside en la India. Varios géneros son de origen Africano, con el  Thelechoris también presente en Madagascar. El género más común en Estados Unidos es Euagrus, que construye su red bajo las piedras de los cañones húmedos. Abunda en áreas como las  Montañas Chiricahua de Arizona.Leptothele y Phyxioschema suthepium son endémicos de Tailandia, y las especies de Phyxioschema se encuentran en Asia Central. Masteria está ampliamente distribuida, con especies originarias de lugares como América Central, Fiyi, las Filipinas, Queensland y Nueva Guinea.​No existen pruebas acerca de la toxicidad del veneno de los diplúridos, aunque lo sensato es evitar el contacto directo con los miembros de mayor tamaño (Diplura sp., Harmonicon sp., Linothele sp., y Trechona sp.).[cita requerida]El muy  venenoso  género Atrax se solía incluir en esta familia, pero actualmente pertenece a Hexathelidae.Raven, R. J.​ y Coyle, F. A.​ reconocen cuatro subfamilias:Subfamilia Diplurinae Simon, 1889Clostes Menge, 1869 † — fósil, Eoceno ámbar BálticoCretadiplura Selden, 2005 † — fósil, Cretácico InferiorDinodiplura Selden, 2005 † — fósil, Cretácico InferiorDiplura C. L. Koch, 1850 — Sudamérica, CubaHarmonicon F. O. P-Cambridge, 1896 — [Guiana Francesa]], BrasilLinothele Karsch, 1879 — SudaméricaTrechona C. L. Koch, 1850 — SudaméricaSubfamilia  Euagrinae Raven, 1979Allothele Tucker, 1920 — ÁfricaAustralothele Raven, 1984 — AustraliaCaledothele Raven, 1991 — AustraliaCarrai Raven, 1984 — Nueva Gales del Sur (Australia)Cethegus Thorell, 1881 — AustraliaEuagrus Ausserer, 1875 — del sur de Estados Unidos a Costa Rica, Sudáfrica, TaiwanMicrohexura Crosby & Bishop, 1925 — Estados UnidosNamirea Raven, 1984 — AustraliaPhyxioschema Simon, 1889 — Asia CentralStenygrocercus Simon, 1892 — Nueva CaledoniaSubfamilia  Ischnothelinae F. O. Pickard-Cambridge, 1897Andethele Coyle, 1995 — PerúIndothele Coyle, 1995 — IndiaIschnothele Ausserer, 1875 — de México a Argentina, Caribe, IndiaLathrothele Benoit, 1965 — ÁfricaThelechoris Karsch, 1881 — África, MadagascarSubfamilia  Masteriinae Simon, 1889Chilehexops Coyle, 1986 — Chile, ArgentinaMasteria L. Koch, 1873 — Caribe, América Central y el sur, Oceanía, AustraliaStriamea Raven, 1981 — Colombiaincertae sedisLeptothele Raven & Schwendinger, 1995 — TailandiaTroglodiplura Main, 1969 — Australia"""
+        entity = "diplúridos"
+        extractor = SpanishArticleExtractor()
+        article = extractor.extract(text, entity)
+        self.assertEqual(article.lower(), 'los')
+
+    def test_article_2(self):
+        text = """La Universidad de las Hamburguesas es el nombre que recibe el centro de formación de McDonald's en Oak Brook, Illinois. Tiene un tamaño de 12.000 metros cuadrados. Fue fundada el 24 de febrero de 1961 por su director general Fred Turner y por Ray Kroc, el mismo año que compró la cadena a los hermanos McDonald.​Hoy en día cuenta con 19 instructores que enseñan en 28 idiomas diferentes. Tiene 13 aulas, auditorio de 300 butacas, 12 aulas de interacción educativa y 3 laboratorios. Los estudiantes reciben aproximadamente 32 horas de entrenamiento en su primer mes y estudian ahí más de 7500 estudiantes cada año. Desde su creación más de 80.000 mánagers y dueños de restaurantes se han graduado.​A día de hoy cuenta con siete «universidades» en todo el mundo, donde se ha invertido mucho dinero. A pesar de que se bromee diciendo «el McDonald's» cuando se pregunta sobre las salidas de un título con poco futuro laboral, en Shanghái, la tasa de aceptación en esta universidad fue de 1 de cada 100 aspirantes (1%). Eso hace a la Universidad de las Hamburguesas siete veces más exclusiva que la Universidad de Harvard.​La filosofía de Ray Kroc: «si estamos yendo a alguna parte, debemos tener talento. Dedicaré mi dinero al talento.»,  a pesar de su muerte en 1984, sigue viva en su cadena de universidades, donde gracias a entre otras cosas a sus tutoriales, día tras día enseñan a nuevos talentos."""
+        entity = "Universidad de las Hamburguesas"
+        extractor = SpanishArticleExtractor()
+        article = extractor.extract(text, entity)
+        self.assertEqual(article.lower(), 'la')

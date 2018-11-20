@@ -12,7 +12,6 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-import tokenizers
 from utils import get_chunks
 
 STOP_SECTIONS = {
@@ -23,12 +22,11 @@ STOP_SECTIONS = {
     'es': ['Véase también', 'Notas', 'Referencias', 'Bibliografía', 'Enlaces externos', 'Notas y referencias']
 }
 
-STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS[config.LANG])))
+STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS.get(config.LANG, []))))
 
 NO_UNIT = {'label': '', 'id': ''}
 
 BATCH_WRITE_SIZE = 500
-tokenizer = config.TOKENIZER
 
 
 def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
@@ -130,24 +128,6 @@ def create_time_fact(formatted_date: str, date: str):
     return fact
 
 
-def tokenize(document):
-    article_text = document['text']
-    tokens, break_levels, pos_tagger_tokens = tokenizer.tokenize(article_text)
-    document['string_sequence'] = tokens
-    document['break_levels'] = break_levels
-    document['pos_tagger_sequence'] = pos_tagger_tokens
-    document['sentence_breaks'] = [i for i, token in enumerate(tokens) if token.strip() in tokenizers.SENTENCE_BREAKS]
-    document['paragraph_breaks'] = [i for i, brk in enumerate(break_levels) if brk == 4]
-
-    tokens, _, _ = tokenizer.tokenize(document['label'])
-    document['label_sequence'] = tokens
-
-    for prop in document['facts']:
-        for fact in document['facts'][prop]:
-            tokens, _, _ = tokenizer.tokenize(fact['value'])
-            fact['value_sequence'] = tokens
-
-
 def clean_text(text: str) -> str:
     match = STOP_SECTIONS_RE.search(text)
     if match and match.start() > 0:
@@ -155,14 +135,8 @@ def clean_text(text: str) -> str:
     text = re.sub("===?\s[^=]+\s===?\n?", "", text)
     text = re.sub("\[\d+\]", "", text)
     text = re.sub("\n{3,}", "\n\n", text)
-    tokens, _, _ = tokenizer.tokenize(text)
     return text
 
-
-def tokenize_props(props):
-    for prop in props:
-        tokens, _, _ = tokenizer.tokenize(prop['label'])
-        prop['label_sequence'] = tokens
 
 
 def merge(limit, configs):
@@ -186,7 +160,6 @@ def merge(limit, configs):
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
             prop_docs = list(wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0}))
             uncached_prop = list(clean_wikidata_docs(prop_docs))
-            tokenize_props(uncached_prop)
             list_prop = documents_to_dict(uncached_prop)
             prop_cache.update(list_prop)
 
@@ -233,7 +206,6 @@ def merge(limit, configs):
             merged_document['text'] = clean_text(page['text'])
             merged_document['properties'] = {pid: prop_cache[pid] for pid in facts if pid in prop_cache}
             merged_document['facts'] = {pid: facts[pid] for pid in facts if pid in prop_cache}
-            tokenize(merged_document)
 
             processed_docs.append(merged_document)
 
