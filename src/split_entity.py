@@ -1,3 +1,4 @@
+import argparse
 import copy
 import csv
 import json
@@ -111,8 +112,7 @@ def get_intersection(languages):
     return intersection, languages_entities
 
 
-def split_entity():
-    languages = ['it', 'en']
+def split_entity(languages):
     qas_intersection, language_qas = get_qa_intersection(languages)
 
     # entity_intersection, language_entities = get_intersection(languages)
@@ -190,10 +190,9 @@ def read_set_qas(file):
     return ids
 
 
-def extract_entity_split_datasets():
+def extract_entity_split_datasets(languages):
     sets = ['test', 'dev', 'train']
 
-    languages = ['it', 'en']
     lang_qas = {}
 
     ids = set()
@@ -234,6 +233,12 @@ if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
 
-    split_entity()
-    extract_entity_split_datasets()
+    parser = argparse.ArgumentParser(description="Builds a parallel corpus on entities.")
+    parser.add_argument('-l', '--langs', help='Languages used to create a parallel split',
+                        required=True, nargs='+')
+
+    args = parser.parse_args()
+
+    split_entity(args.langs)
+    extract_entity_split_datasets(args.langs)
     logging.info("Completed %s", " ".join(sys.argv))
