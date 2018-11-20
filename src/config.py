@@ -16,6 +16,7 @@ WIKIDATA_COLLECTION = "wikidata"
 WIKIPEDIA_COLLECTION = "{}wiki".format(LANG)
 WIKIMERGE_COLLECTION = "{}wiki_merged".format(LANG)
 OMERMERGE_COLLECTION = "{}wiki_omer".format(LANG)
+SRLMERGE_COLLECTION = "{}wiki_srl".format(LANG)
 
 TOKENIZER = SpacyTokenizer(LANG, disable=['parser', 'ner', 'textcat', 'tagger'])
 DATE_FORMATTER = DateFormatterFactory.get_formatter(lang=LANG, out_locale=LOCALE)

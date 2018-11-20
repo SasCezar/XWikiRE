@@ -200,7 +200,8 @@ def extract_entity_split_datasets(languages):
         ids.update(read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type)))
 
     for lang in languages:
-        ids.update(read_set_qas("ids_{}_train_set.txt".format(lang)))
+        f = "-".join(copy.deepcopy(languages).pop(lang))
+        ids.update(read_set_qas("ids_{}_train_set_for-{}.txt".format(lang, f)))
 
     for lang in languages:
         logging.info("Loading '{}'".format(lang))
@@ -220,10 +221,9 @@ def extract_entity_split_datasets(languages):
                         outf.write(string_qa + "\n")
 
     for language in languages:
-        set_qas = read_set_qas("ids_{}_train_set.txt".format(language))
-        with open("qas_{}_train_set_for-{}.json".format(language, "-".join(copy.deepcopy(languages).pop(language))),
-                  "wt",
-                  encoding="utf8") as outf:
+        f = "-".join(copy.deepcopy(languages).pop(language))
+        set_qas = read_set_qas("ids_{}_train_set_for-{}.txt".format(language, f))
+        with open("qas_{}_train_set_for-{}.json".format(language, f), "wt", encoding="utf8") as outf:
             for qid in set_qas:
                 for template in lang_qas[language][qid]:
                     string_qa = json.dumps(template, ensure_ascii=False)
