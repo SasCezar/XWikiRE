@@ -24,6 +24,11 @@ class ArticleExtractorI(ABC):
         return article
 
 
+class DummyArticleExtractor(ArticleExtractorI):
+    def extract(self, text, entity):
+        return ''
+
+
 class ItalianArticleExtractor(ArticleExtractorI):
     def __init__(self):
         super().__init__()
@@ -43,7 +48,19 @@ class FrenchArticleExtractor(ArticleExtractorI):
 class GermanArticleExtractor(ArticleExtractorI):
     def __init__(self):
         super().__init__()
-        self.articles = ['Der', 'Die', 'Das', 'Ein', 'Eine']
+        self._articles = ['Der', 'Die', 'Das', 'Ein', 'Eine']
+        self._re_template = "(?P<article>" + "|".join(
+            ["\\b" + article + "\\b" for article in self._articles]) + ")(\s){}"
+
+    def extract(self, text, entity):
+        text = text.split("\n")[0]
+        return super().extract(text, entity)
+
+
+class SpanishArticleExtractor(ArticleExtractorI):
+    def __init__(self):
+        super().__init__()
+        self._articles = ['El', 'La', 'Los', 'Las']
         self._re_template = "(?P<article>" + "|".join(
             ["\\b" + article + "\\b" for article in self._articles]) + ")(\s){}"
 
@@ -53,3 +70,11 @@ class ArticleExtractorFactory(object):
     def make_extractor(lang):
         if lang == 'it':
             return ItalianArticleExtractor()
+
+        if lang == 'de':
+            return GermanArticleExtractor()
+
+        if lang == 'es':
+            return SpanishArticleExtractor()
+
+        return DummyArticleExtractor()
