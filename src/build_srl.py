@@ -54,8 +54,7 @@ def build(limit, configs):
 
     processed = []
     n = 0
-    neg_count = 0
-    pos_count = 0
+    extracted = 0
     start_time = time.time()
     for page in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
         text = page['text'].strip()
@@ -85,7 +84,7 @@ def build(limit, configs):
                       "answer_id": fact['id'], "prop_id": prop,
                       "type": fact['type'], "example": "positive"}
 
-                pos_count += 1
+                extracted += 1
 
                 qas[fact['type']].append(qa)
 
@@ -103,7 +102,8 @@ def build(limit, configs):
         n += len(processed)
 
     elapsed = int(time.time() - start_time)
-    return n, elapsed, neg_count, pos_count
+    res = {"processed": n, "elapsed": elapsed, "extracted": extracted}
+    return res
 
 
 def build_srt(configs):
@@ -123,19 +123,14 @@ def build_srt(configs):
     else:
         pool = multiprocessing.Pool(config.NUM_WORKERS)
 
-        for n, elapsed, neg_examples, pos_examples in pool.imap(partial(build, configs=configs), chunks):
-            total += n
-            part = int(time.time() - start_time)
-            tot_neg_examples += neg_examples
-            tot_pos_examples += pos_examples
-            logging.info(
-                "Processed {} ({} in total) documents in {} (running time {}) - Neg examples {} - Pos examples {}".format(
-                    n, total,
-                    compress(
-                        elapsed),
-                    compress(part),
-                    tot_neg_examples,
-                    tot_pos_examples))
+        for res in pool.imap(partial(build, configs=configs), chunks):
+            total += res['processed']
+            res['total'] = total
+            elapsed = int(time.time() - start_time)
+            res['total_elapsed'] = compress(elapsed)
+            res['elapsed'] = compress(res['elapsed'])
+            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
+                         "total_elapsed}) - Extracted {extracted}".format(**res))
 
         pool.terminate()
     elapsed = int(time.time() - start_time)

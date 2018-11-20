@@ -37,13 +37,14 @@ def tokenize(document):
 
     return document
 
+
 def build(limit):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
     wikireading = db['test_wikireading']
 
-    i = 0
+    n = 0
     processed = []
     start_time = time.time()
     for pa in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
@@ -52,7 +53,7 @@ def build(limit):
             continue
 
         page = tokenize(pa)
-        i += 1
+        n += 1
         wikireading_doc = {'answer_breaks': [], 'answer_ids': ['IDs'], 'answer_location': [],
                            'answer_sequence': ['IDs'], 'answer_string_sequence': [], 'break_levels': [],
                            'document_sequence': ['IDs'], 'full_match_answer_location': [],
@@ -93,7 +94,8 @@ def build(limit):
         wikireading.insert_many(processed, ordered=False, bypass_document_validation=True)
 
     elapsed = int(time.time() - start_time)
-    return i, elapsed
+    res = {"processed": n, "elapsed": elapsed}
+    return res
 
 
 def wikireading():
@@ -112,14 +114,17 @@ def wikireading():
     else:
         chunks = [(x.decode(), y.decode()) for x, y in chunks]
         pool = multiprocessing.Pool(config.NUM_WORKERS)
-        for n, elapsed in pool.imap(build, chunks):
-            total += n
+        for res in pool.imap(build, chunks):
+            total += res['processed']
+            res['total'] = total
             part = int(time.time() - start_time)
-            logging.info(
-                "Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed),
-                                                                                      compress(part)))
+            res['elapsed'] = compress(res['elapsed'])
+            res['total_elapsed'] = compress(part)
+            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
+                         "total_elapsed})".format(**res))
 
         pool.terminate()
+
     elapsed = int(time.time() - start_time)
     logging.info("Processed {} documents in {}".format(total, compress(elapsed)))
     return
