@@ -126,7 +126,7 @@ P40,child,What was XXX's child's name?,Qual era il nome del bambino di XXX?,Qual
 P1057,chromosome,What is the name of the chromosome where you can find XXX?,Qual è il nome del cromosoma in cui puoi trovare XXX?,Qual è il nome del cromosoma in cui puoi trovare YYY XXX?
 P1057,chromosome,On what chromosome is XXX found?,Su quale cromosoma è stato trovato XXX?,
 P1057,chromosome,Which chromosome is the gene XXX located on?,Su quale cromosoma si trova il gene XXX?,Su quale cromosoma si trova il gene XXX?
-P1057,chromosome,Which  chromosome is related with XXX?,Quale cromosoma è correlato a XXX?,
+P1057      ,chromosome                                      ,Whichchromosome is related with XXX?                                   ,Quale cromosoma è correlato a XXX?                                        ,
 P1057,chromosome,On what chromosome is XXX located?,Su quale cromosoma si trova XXX?,Su quale cromosoma si trova XXX?
 P1057,chromosome,What chromosome is XXX?,Quale cromosoma è XXX?,Quale cromosoma è XXX?
 P1057,chromosome,What is the name of XXX's chromosome?,Qual è il nome del cromosoma di XXX?,
@@ -605,8 +605,7 @@ P1412,languages spoken or written,Which was the nationality of XXX?,Qual era la 
 P1412,languages spoken or written,What was XXX's nationality?,Qual era la nazionalità di XXX?,Qual era la nazionalità di XXX?
 P1412,languages spoken or written,What nationality of XXX?,Di quale nazionalità di XXX?,
 P118,league,The team XXX is a member of which sports league?,La squadra XXX è un membro di quale lega sportiva?,La squadra XXX è un membro di quale lega sportiva?
-P118,league,Which soccer league is XXX in?,Quale campionato di calcio è XXX in?,In quale campionato di calcio gioca YYY XXX? 
-P118,league,What football league is XXX a part of?,Di quale campionato di calcio fa parte XXX?,
+P118       ,league                                          ,Which soccer league is XXX in?                                         ,Quale campionato di calcio è XXX in?                                      ,In quale campionato di calcio gioca YYY XXX?P118                             ,league,What football league is XXX a part of?,Di quale campionato di calcio fa parte XXX?,
 P118,league,What league does XXX participate in?,In che lega partecipa XXX?,In che lega partecipa YYY XXX?
 P118,league,Which league did XXX join with?,In quale campionato si è unito XXX?,
 P118,league,Which is the league of XXX?,Qual è il campionato di XXX?,Qual è il campionato diYYY XXX?
@@ -775,7 +774,7 @@ P1411,nominated for,What award was XXX nominated for?,Per quale premio è stata 
 P1411,nominated for,What was XXX nominated for?,Per cosa è stata nominata la XXX?,Per quale riconosimento ha ottenuto una nomina XXX?
 P466,occupant,What team uses XXX?,Quale squadra usa XXX?,Chi occupa YYY XXX?
 P106,occupation,What was XXX's occupation?,Qual è stata l'occupazione di XXX?,Qual è l'occupazione di XXX?
-P106,occupation,What kind of  occupation does XXX have?,Che tipo di occupazione ha XXX?,Qual è l'impiego di XXX?
+P106       ,occupation                                      ,What kind ofoccupation does XXX have?                                  ,Che tipo di occupazione ha XXX?                                           ,Qual è l'impiego di XXX?
 P106,occupation,What was XXX's career?,Qual è stata la carriera di XXX?,
 P306,operating system,What is the operating system used with XXX?,Qual è il sistema operativo utilizzato con XXX?,Qual è il sistema operativo utilizzato con XXX?
 P449,original network,What original network is XXX on?,In quale rete originale è attivo XXX?,
@@ -850,7 +849,7 @@ P175,performer,The song or album XXX came from which artiste?,La canzone o l'alb
 P175,performer,Who is the artist of XXX?,Chi è l'artista di XXX?,Chi è l'artista di XXX?
 P175,performer,Who performed XXX?,Chi ha interpretato XXX?,
 P175,performer,Who originally recorded XXX?,Chi ha registrato in origine XXX?,Chi ha registrato in origine XXX?
-P175,performer,Which singer-songwriter  is XXX the fifth studio album of?,Quale cantautore è il XXX quinto album in studio di?,
+P175       ,performer                                       ,Which singer-songwriteris XXX the fifth studio album of?               ,Quale cantautore è il XXX quinto album in studio di?                      ,
 P175,performer,Which artist is XXX co-written and recorded by?,Quale artista è co-autore e registrato da XXX?,
 P175,performer,Which performer released XXX?,Quale esecutore ha pubblicato XXX?,
 P175,performer,The song XXX is by what artist?,La canzone XXX è di quale artista?,
@@ -860,7 +859,7 @@ P19,place of birth,What city was XXX born in?,In quale città è nato XXX?,
 P19,place of birth,In what city was XXX born in?,In quale città è nato XXX?,
 P19,place of birth,What is the name of the city XXX was born in?,Come è nato il nome della città in cui è nata XXX?,
 P19,place of birth,What city was XXX born?,Quale città è nata XXX?,
-P19,place of birth,What is the birth place of  XXX?,Qual è il luogo di nascita di XXX?,Qual è il luogo di nascita di XXX?
+P19        ,place of birth                                  ,What is the birth place ofXXX?                                         ,Qual è il luogo di nascita di XXX?                                        ,Qual è il luogo di nascita di XXX?
 P19,place of birth,What is XXX's birthplace?,Qual è il luogo di nascita di XXX?,
 P19,place of birth,What is the birthplace of XXX?,Qual è il luogo di nascita di XXX?,
 P19,place of birth,What was XXX's city of birth?,Qual è stata la città di nascita di XXX?,Qual è stata la città di nascita di XXX?
@@ -874,7 +873,7 @@ P119,place of burial,What cemetery was XXX baried in?,In quale cimitero era pres
 P119,place of burial,What cemetery was XXX buried ar?,Quale cimitero è stato sepolto XXX?,In quale cimitero è stato sepolto XXX?
 P119,place of burial,In which cemetary is XXX buried?,In quale cimitero è sepolto XXX?,
 P119,place of burial,What is the place of burial of XXX?,Qual è il luogo di sepoltura di XXX?,Qual è il luogo di sepoltura di XXX?
-P119,place of burial,What  is the place of burial for XXX?,Qual è il luogo di sepoltura per XXX?,
+P119       ,place of burial                                 ,Whatis the place of burial for XXX?                                    ,Qual è il luogo di sepoltura per XXX?                                     ,
 P119,place of burial,Where was XXX burried?,Dove è stata sepolta XXX?,
 P119,place of burial,Where was the body of XXX buried?,Dov'era sepolto il corpo di XXX?,Dov'era sepolto il corpo di XXX?
 P119,place of burial,The final resting place of XXX is at what cemetery?,L'ultima dimora di XXX è in quale cimitero?,
@@ -908,7 +907,7 @@ P413,position played on team / speciality,What is XXX's position in football?,Qu
 P413,position played on team / speciality,In which position does XXX play?,In quale posizione gioca XXX?,In quale ruolo gioca XXX?
 P413,position played on team / speciality,What was XXX's position?,Qual è stata la posizione di XXX?,
 P413,position played on team / speciality,What position was played by XXX?,Quale posizione è stata giocata da XXX?,Quale posizione è stata giocata da XXX?
-P413,position played on team / speciality,What  is XXX's position on the field while playing football?,Qual è la posizione di XXX sul campo mentre giochi a calcio?,
+P413       ,position played on team / speciality            ,Whatis XXX's position on the field while playing football?             ,Qual è la posizione di XXX sul campo mentre giochi a calcio?              ,
 P413,position played on team / speciality,What was XXX specialty in their profesisonal sport?,Qual è stata la specialità XXX nel loro sport professionale?,Qual è stata la specialità di XXX nel suo sport professionale?
 P413,position played on team / speciality,What position does XXX play on the field?,Quale posizione gioca XXX sul campo?,Quale posizione gioca XXX sul campo?
 P413,position played on team / speciality,What football position did XXX play?,Quale posizione di calcio ha interpretato XXX?,
