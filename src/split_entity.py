@@ -221,7 +221,8 @@ def extract_entity_split_datasets(languages):
 
     for language in languages:
         set_qas = read_set_qas("ids_{}_train_set.txt".format(language))
-        with open("qas_{}_train_set.json".format(language), "wt",
+        with open("qas_{}_train_set_for-{}.json".format(language, "-".join(copy.deepcopy(languages).pop(language))),
+                  "wt",
                   encoding="utf8") as outf:
             for qid in set_qas:
                 for template in lang_qas[language][qid]:

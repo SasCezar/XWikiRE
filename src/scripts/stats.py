@@ -8,8 +8,7 @@ from pymongo import MongoClient
 import config
 
 
-def get_prop_count():
-    langs = ['it', 'es', 'fr', 'en', 'de']
+def get_prop_count(langs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     for lang in langs:
@@ -61,9 +60,7 @@ def get_combinations(iterable):
     return result
 
 
-def get_qa_id_itersection(etype='positive'):
-    langs = ['it', 'es', 'fr', 'en', 'de']
-
+def get_qa_id_itersection(langs, etype='positive'):
     omer_props = get_omer_props()
 
     qa_ids_per_prop_and_lang = {lang: {key: set() for key in omer_props} for lang in langs}
@@ -100,13 +97,7 @@ def get_qa_id_itersection(etype='positive'):
                 writer.writerow([prop, qa_ids_per_prop_combs[key][prop]])
 
 
-# get_prop_count()
-# get_qa_id_itersection()
-# get_qa_id_itersection('negative')
-
-
-def get_props():
-    langs = ['it', 'es', 'fr', 'en', 'de']
+def get_props(langs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     for lang in langs:
@@ -133,4 +124,8 @@ def get_props():
                         writer.writerow([prop, ex_id, ex_type])
 
 
-get_props()
+LANGS = ['it', 'es', 'fr', 'en', 'de', 'kn']
+get_props(LANGS)
+get_prop_count(LANGS)
+get_qa_id_itersection(LANGS, 'positive')
+get_qa_id_itersection(LANGS, 'negative')
