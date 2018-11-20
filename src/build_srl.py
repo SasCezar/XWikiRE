@@ -4,7 +4,6 @@ import multiprocessing
 import re
 import sys
 import time
-from collections import defaultdict
 from functools import partial
 
 import nltk
@@ -12,21 +11,7 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from utils import get_chunks, is_sublist
-
-
-def distant_supervision(answer_sequence, entity_sequence, text_sequence, sentence_breaks):
-    if not answer_sequence:
-        return False
-
-    for start, end in zip([-1] + sentence_breaks, sentence_breaks + [len(text_sequence) - 1]):
-        sentence = text_sequence[start + 1:end + 1]
-        # TODO If want to add aliases Cross product between aliases of answer and entity, then ANY for if statement
-        if is_sublist(answer_sequence, sentence) and is_sublist(entity_sequence, sentence):
-            return start + 1, end + 1
-
-    return False
-
+from utils import get_chunks
 
 BATCH_WRITE_SIZE = 500
 
@@ -36,12 +21,14 @@ def get_id_for_qa(page_id, prop_id, answer_id):
     return hashlib.sha1(unique_str.encode("utf-8")).hexdigest()
 
 
-def string_distant_supervision(answer, entity, sentences):
+def srl_distant_supervision(answer, entity, relations, sentences):
     e_template = "\\b" + re.escape(entity) + "\\b"
     a_template = "\\b" + re.escape(answer) + "\\b"
+    r_template = "(?P<relation>" + "|".join(["\\b" + re.escape(relation) + "\\b" for relation in relations])
     for sentence in sentences:
-        if re.search(e_template, sentence) and re.search(a_template, sentence):
-            return sentence
+        relation = re.search(r_template, sentence)
+        if re.search(e_template, sentence) and re.search(a_template, sentence) and relation:
+            return sentence, relation.group("relation")
 
     return False
 
@@ -50,7 +37,7 @@ def build(limit, configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
-    omermerge = db[config.OMERMERGE_COLLECTION]
+    srlmerge = db[config.SRLMERGE_COLLECTION]
 
     processed = []
     n = 0
@@ -62,43 +49,38 @@ def build(limit, configs):
             continue
 
         sentences = nltk.tokenize.sent_tokenize(text.replace("\n\n", "\n"), language='english')
-        omer_doc = {"id": page['id'], "string_sequence": page.get('string_sequence', []),
-                    "text": page['text'],
-                    "label_sequence": page.get('label_sequence', []), "label": page['label'], 'QA': {}}
+        srl = {"id": page['id'], "text": page['text'], "label": page['label'], 'sentences': []}
 
-        qas = defaultdict(list)
         for prop in page['facts']:
             relation = page['properties'][prop]
-            omer_doc['QA'][prop] = []
+
+            prop_labels = relation['aliases'].append(relation['label'])
 
             for fact in page['facts'][prop]:
                 answer = fact['value']
 
-                sentence = string_distant_supervision(answer, omer_doc['label'], sentences)
+                sentence, sentence_relation = srl_distant_supervision(answer, srl['label'], prop_labels, sentences)
 
                 if not sentence:
                     continue
 
-                qa = {"relation": relation['label'], "sentence": sentence,
-                      "answer": fact['value'], "id": get_id_for_qa(page['id'], prop, fact['id']),
-                      "answer_id": fact['id'], "prop_id": prop,
-                      "type": fact['type'], "example": "positive"}
+                labeled_sentence = {"relation": relation['label'], "sentence": sentence, "answer": fact['value'],
+                                    "id": get_id_for_qa(page['id'], prop, fact['id']), "answer_id": fact['id'],
+                                    "prop_id": prop, "sentence_relation": sentence_relation, "type": fact['type']}
 
                 extracted += 1
 
-                qas[fact['type']].append(qa)
+                srl['sentences'].append(labeled_sentence)
 
-                omer_doc['QA'][prop].append(qa)
-
-        processed.append(omer_doc)
+        processed.append(srl)
 
         if len(processed) > BATCH_WRITE_SIZE:
-            omermerge.insert_many(processed, ordered=False, bypass_document_validation=True)
+            srlmerge.insert_many(processed, ordered=False, bypass_document_validation=True)
             n += len(processed)
             processed = []
 
     if processed:
-        omermerge.insert_many(processed, ordered=False, bypass_document_validation=True)
+        srlmerge.insert_many(processed, ordered=False, bypass_document_validation=True)
         n += len(processed)
 
     elapsed = int(time.time() - start_time)
@@ -106,7 +88,7 @@ def build(limit, configs):
     return res
 
 
-def build_srt(configs):
+def build_srl(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIMERGE_COLLECTION]
@@ -143,5 +125,5 @@ def build_srt(configs):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    build_srt({})
+    build_srl({})
     logging.info("Completed %s", " ".join(sys.argv))

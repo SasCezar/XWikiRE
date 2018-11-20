@@ -67,7 +67,7 @@ class FrenchTemplateFiller(TemplateFillerI):
 
     def fill(self, template: str, entity: str, **kwargs):
         if re.search("de\sXXX", template) and entity[0].lower() in self._vowels:
-            template = re.sub("de\sXXX", "d'", template)
+            template = re.sub("de\sXXX", "d'XXX", template)
 
         template = template.replace("XXX", entity)
         template = re.sub("\s{2,}", " ", template)

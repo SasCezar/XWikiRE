@@ -173,9 +173,9 @@ def build_omer(configs):
             res['total_negatives'] = tot_neg_examples
             tot_pos_examples += res['positives']
             res['total_positives'] = tot_pos_examples
-            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
-                         "total_elapsed}) - Neg examples {total_negatives} - Pos examples {total_positives}".format(
-                **res))
+            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time "
+                         "{total_elapsed}) - Neg examples {total_negatives} - Pos examples {total_positives}"
+                         .format(**res))
 
         pool.terminate()
     elapsed = int(time.time() - start_time)
@@ -237,7 +237,8 @@ def extract_examples(example_type):
                                 except:
                                     traceback.print_exc()
                                     i += 1
-                                    print("Answer: {} ---- Context: {}".format(example['answer'], example['context']))
+                                    logging.info(
+                                        "Answer: {} ---- Context: {}".format(example['answer'], example['context']))
                                     continue
                                 example['start_index'] = start_index
                                 example['end_index'] = end_index
@@ -247,13 +248,13 @@ def extract_examples(example_type):
                                 example['end_index'] = -1
                                 example['na'] = 0
                             outf.write(json.dumps(example, ensure_ascii=False) + "\n")
-        print("Skipped {} question/answers".format(i))
+        logging.info("Skipped {} question/answers".format(i))
 
 
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    build_omer({})
+    # build_omer({})
     extract_examples("positive")
     extract_examples("negative")
     logging.info("Completed %s", " ".join(sys.argv))
