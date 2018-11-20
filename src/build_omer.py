@@ -170,9 +170,12 @@ def build_omer(configs):
             res['total_elapsed'] = compress(elapsed)
             res['elapsed'] = compress(res['elapsed'])
             tot_neg_examples += res['negatives']
+            res['total_negatives'] = tot_neg_examples
             tot_pos_examples += res['positives']
+            res['total_positives'] = tot_pos_examples
             logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
-                         "total_elapsed}) - Neg examples {negatives} - Pos examples {positives}".format(**res))
+                         "total_elapsed}) - Neg examples {total_negatives} - Pos examples {total_positives}".format(
+                **res))
 
         pool.terminate()
     elapsed = int(time.time() - start_time)
