@@ -222,7 +222,8 @@ def merge(limit, configs):
         wikimerge.insert_many(processed_docs, ordered=False, bypass_document_validation=True)
 
     elapsed = int(time.time() - start_time)
-    return n, elapsed
+    res = {"processed": n, "elapsed": elapsed}
+    return res
 
 
 def wikimerge(configs):
@@ -240,11 +241,14 @@ def wikimerge(configs):
             merge(chunk, {})
     else:
         pool = multiprocessing.Pool(config.NUM_WORKERS)
-        for n, elapsed in pool.imap(partial(merge, configs=configs), chunks):
-            total += n
+        for res in pool.imap(partial(merge, configs=configs), chunks):
+            total += res['processed']
+            res['total'] = total
             part = int(time.time() - start_time)
-            logging.info("Processed {} ({} in total) documents in {} (running time {})".format(n, total, compress(elapsed),
-                                                                                               compress(part)))
+            res['elapsed'] = compress(res['elapsed'])
+            res['total_elapsed'] = compress(part)
+            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
+                         "total_elapsed})".format(**res))
 
         pool.terminate()
     elapsed = int(time.time() - start_time)

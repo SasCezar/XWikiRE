@@ -96,9 +96,7 @@ def build(limit, configs):
             continue
 
         sentences = nltk.tokenize.sent_tokenize(text.replace("\n\n", "\n"), language='french')
-        omer_doc = {"id": page['id'], "string_sequence": page.get('string_sequence', []),
-                    "text": page['text'],
-                    "label_sequence": page.get('label_sequence', []), "label": page['label'], 'QA': {},
+        omer_doc = {"id": page['id'], "text": page['text'], "label": page['label'], 'QA': {},
                     'entity_article': article_extractor.extract(page['text'], page['label'])}
 
         qas = defaultdict(list)
@@ -144,7 +142,8 @@ def build(limit, configs):
         n += len(processed)
 
     elapsed = int(time.time() - start_time)
-    return n, elapsed, neg_count, pos_count
+    res = {"processed": n, "negatives": neg_count, "positives": pos_count, "elapsed": elapsed}
+    return res
 
 
 def build_omer(configs):
@@ -164,19 +163,16 @@ def build_omer(configs):
     else:
         pool = multiprocessing.Pool(config.NUM_WORKERS)
 
-        for n, elapsed, neg_examples, pos_examples in pool.imap(partial(build, configs=configs), chunks):
-            total += n
-            part = int(time.time() - start_time)
-            tot_neg_examples += neg_examples
-            tot_pos_examples += pos_examples
-            logging.info(
-                "Processed {} ({} in total) documents in {} (running time {}) - Neg examples {} - Pos examples {}".format(
-                    n, total,
-                    compress(
-                        elapsed),
-                    compress(part),
-                    tot_neg_examples,
-                    tot_pos_examples))
+        for res in pool.imap(partial(build, configs=configs), chunks):
+            total += res['processed']
+            res['total'] = total
+            elapsed = int(time.time() - start_time)
+            res['total_elapsed'] = compress(elapsed)
+            res['elapsed'] = compress(res['elapsed'])
+            tot_neg_examples += res['negatives']
+            tot_pos_examples += res['positives']
+            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
+                         "total_elapsed}) - Neg examples {negatives} - Pos examples {positives}".format(**res))
 
         pool.terminate()
     elapsed = int(time.time() - start_time)
