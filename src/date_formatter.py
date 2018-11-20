@@ -91,8 +91,8 @@ class DateFormatter(ABC):
         if out_locale:
             locale.setlocale(locale.LC_TIME, out_locale)
         self._BCE_TOKEN = BC_TOKEN[lang]
-        self._millenium_template = MILLENNIUM_TOKEN[lang]
-        self._century_template = CENTURY_TOKEN[lang]
+        self._millenium_template = MILLENNIUM_TOKEN.get(lang, "")
+        self._century_template = CENTURY_TOKEN.get(lang, "")
         self._day_template = DAY_TEMPLATE.get(lang, "%#d %B %#Y")
         self._month_template = MONTH_TEMPLATE.get(lang, "%B %#Y")
         self._year_template = "{year} {era}"
@@ -193,8 +193,8 @@ class KannadaDateFormatter(DateFormatter):
     def _parse_day(self, date, era=""):
         date = parse(date)
         day = self._num_to_kannada(date.day)
-        month = KN_MONTH_MAP[date.day]
-        year = self._num_to_kannada(date.day)
+        month = KN_MONTH_MAP[int(date.month)]
+        year = self._num_to_kannada(date.year)
         formatted = " ".join((month, day + ",", year, era))
         return formatted.strip()
 
