@@ -54,6 +54,14 @@ internazionale e la cooperazione tra i popoli».[4] """
 
         self.assertEqual("I", article)
 
+    def test_i(self):
+        extractor = ItalianArticleExtractor()
+        text = """I Foxboro Hot Tubs sono un gruppo garage rock statunitense."""
+        entity = "Foxboro Hot Tubs"
+
+        article = extractor.extract(text, entity)
+        self.assertEqual("I", article)
+
     def test_in(self):
         extractor = ItalianArticleExtractor()
 
