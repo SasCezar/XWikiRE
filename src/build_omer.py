@@ -95,7 +95,7 @@ def build(limit, configs):
         if not text:
             continue
 
-        sentences = nltk.tokenize.sent_tokenize(text.replace("\n\n", "\n"), language='french')
+        sentences = nltk.tokenize.sent_tokenize(text.replace("\n\n", "\n"), language=config.LANGUAGE)
         omer_doc = {"id": page['id'], "text": page['text'], "label": page['label'], 'QA': {},
                     'entity_article': article_extractor.extract(page['text'], page['label'])}
 
@@ -254,7 +254,7 @@ def extract_examples(example_type):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    # build_omer({})
+    build_omer({})
     extract_examples("positive")
     extract_examples("negative")
     logging.info("Completed %s", " ".join(sys.argv))
