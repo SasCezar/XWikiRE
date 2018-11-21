@@ -2,14 +2,16 @@ import hashlib
 import itertools
 import re
 import time
+import traceback
 from abc import ABC, abstractmethod
 from collections import Counter, defaultdict
 
 import nltk
+from ftfy import fix_text
+from nltk.tokenize.moses import MosesTokenizer
 from pymongo import MongoClient
 
 from article_extractors import ArticleExtractorFactory
-from sling_tokenizer import SlingTokenizer
 
 
 class Builder(ABC):
@@ -26,8 +28,14 @@ class Builder(ABC):
         mask = kwargs['mask'] if 'mask' in kwargs else {"_id": 0}
         start_time = time.time()
         counter = Counter()
-        for doc in self._source.find({key: {"$gte": limit[0], "$lte": limit[1]}}, mask):
-            result = self._build(doc)
+        # for doc in self._source.find({key: {"$gte": limit[0], "$lte": limit[1]}}, mask):
+        for doc in self._source.find({key: {"$in": limit}}, mask):
+            try:
+                result = self._build(doc)
+            except:
+                traceback.print_exc()
+                continue
+
             if result:
                 document = result['document']
                 counter.update(result['stats'])
@@ -57,7 +65,8 @@ class SRLBuilder(Builder):
 
     def __init__(self, ip, port, db, source, destination, language):
         super().__init__(ip, port, db, source, destination)
-        self._tokenizer = nltk.sent_tokenize
+        self._sent_tokenizer = nltk.sent_tokenize
+        self._word_tokenizer = MosesTokenizer(language)
         self._language = language
 
     def _build(self, doc, **kwargs):
@@ -65,8 +74,9 @@ class SRLBuilder(Builder):
         if not text:
             return {}
 
-        sentences = self._tokenizer(text.replace("\n\n", "\n"), language=self._language)
-        srl = {"id": doc['id'], "text": doc['text'], "label": doc['label'], 'sentences': []}
+        sentences = self._sent_tokenizer(text.replace("\n\n", "\n"), language=self._language)
+        srl = {"id": doc['id'], "text": doc['text'], "label": doc['label'],
+               "label_sequence": self._tokenize(doc['label']), 'sentences': []}
 
         extracted = 0
         for prop in doc['facts']:
@@ -82,9 +92,16 @@ class SRLBuilder(Builder):
                 if not sentence:
                     continue
 
-                labeled_sentence = {"relation": relation['label'], "sentence": sentence, "answer": fact['value'],
-                                    "id": self._get_id_for_qa(doc['id'], prop, fact['id']), "answer_id": fact['id'],
-                                    "prop_id": prop, "sentence_relation": sentence_relation, "type": fact['type']}
+                sentence_sequence = self._tokenize(sentence)
+                answer_sequence = self._tokenize(fact['value'])
+                relation_sequence = self._tokenize(sentence_relation)
+
+                labeled_sentence = {"relation": relation['label'], "sentence": sentence,
+                                    "sentence_sequence": sentence_sequence, "answer": fact['value'],
+                                    "answer_sequence": answer_sequence,
+                                    "id": self._get_id_for_qa(doc['id'], prop, fact['id']),
+                                    "answer_id": fact['id'], "prop_id": prop, "sentence_relation": sentence_relation,
+                                    "relation_sequence": relation_sequence, "type": fact['type']}
 
                 extracted += 1
 
@@ -108,6 +125,10 @@ class SRLBuilder(Builder):
     def _get_id_for_qa(page_id, prop_id, answer_id):
         unique_str = " ".join([page_id, prop_id, answer_id])
         return hashlib.sha1(unique_str.encode("utf-8")).hexdigest()
+
+    def _tokenize(self, sentence):
+        sentence = sentence.replace("\n", "")
+        return [fix_text(t) for t in self._word_tokenizer.tokenize(sentence)]
 
 
 class OmerBuilder(Builder):
@@ -203,7 +224,7 @@ class OmerBuilder(Builder):
 class WikiReadingBuilder(Builder):
     def __init__(self, ip, port, db, source, destination):
         super().__init__(ip, port, db, source, destination)
-        self._tokenizer = SlingTokenizer()
+        self._tokenizer = lambda x: x.split() # SlingTokenizer()
         self._pos_tagger = nltk.pos_tag
 
     def _build(self, doc, **kwargs):

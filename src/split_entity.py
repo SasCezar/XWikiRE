@@ -136,7 +136,10 @@ def split_entity(languages):
         lang_pool = {x for x in language_qas[language] if x[0] not in used}
         logging.info("Language {} pool size = {}".format(language, len(lang_pool)))
         used_entities, set_ids = random_sample_qas(lang_pool, 1000000, used, keep_all=True)
-        write_set_ids(set_ids, "ids_{}_train_set.txt".format(language))
+        remaining = copy.deepcopy(languages)
+        remaining.pop(remaining.index(language))
+        f = "-".join(remaining)
+        write_set_ids(set_ids, "ids_{}_train_set_for-{}.txt".format(language, f))
 
 
 def check_duplicates():
@@ -199,16 +202,18 @@ def extract_entity_split_datasets(languages):
     for set_type in sets:
         ids.update(read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type)))
 
-    for lang in languages:
-        f = "-".join(copy.deepcopy(languages).pop(lang))
-        ids.update(read_set_qas("ids_{}_train_set_for-{}.txt".format(lang, f)))
+    for language in languages:
+        remaining = copy.deepcopy(languages)
+        remaining.pop(remaining.index(language))
+        f = "-".join(remaining)
+        ids.update(read_set_qas("ids_{}_train_set_for-{}.txt".format(language, f)))
 
-    for lang in languages:
-        logging.info("Loading '{}'".format(lang))
-        qas = load_qas("{}_qa_positive.json".format(lang), ids)
-        qas.update(load_qas("{}_qa_negative.json".format(lang), ids))
-        lang_qas[lang] = qas
-        logging.info("Loaded '{}'".format(lang))
+    for language in languages:
+        logging.info("Loading '{}'".format(language))
+        qas = load_qas("{}_qa_positive.json".format(language), ids)
+        qas.update(load_qas("{}_qa_negative.json".format(language), ids))
+        lang_qas[language] = qas
+        logging.info("Loaded '{}'".format(language))
 
     for set_type in sets:
         set_qas = read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type))
@@ -221,7 +226,9 @@ def extract_entity_split_datasets(languages):
                         outf.write(string_qa + "\n")
 
     for language in languages:
-        f = "-".join(copy.deepcopy(languages).pop(language))
+        remaining = copy.deepcopy(languages)
+        remaining.pop(remaining.index(language))
+        f = "-".join(remaining)
         set_qas = read_set_qas("ids_{}_train_set_for-{}.txt".format(language, f))
         with open("qas_{}_train_set_for-{}.json".format(language, f), "wt", encoding="utf8") as outf:
             for qid in set_qas:
@@ -235,8 +242,7 @@ if __name__ == '__main__':
     logging.info("Running %s", " ".join(sys.argv))
 
     parser = argparse.ArgumentParser(description="Builds a parallel corpus on entities.")
-    parser.add_argument('-l', '--langs', help='Languages used to create a parallel split',
-                        required=True, nargs='+')
+    parser.add_argument('-l', '--langs', help='Languages used to create a parallel split', required=True, nargs='+')
 
     args = parser.parse_args()
 

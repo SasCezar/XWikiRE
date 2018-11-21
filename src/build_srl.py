@@ -1,91 +1,22 @@
-import hashlib
 import logging
 import multiprocessing
-import re
 import sys
 import time
 from functools import partial
 
-import nltk
 from natural.date import compress
 from pymongo import MongoClient
 
 import config
+from builder import SRLBuilder
 from utils import get_chunks
-
-BATCH_WRITE_SIZE = 500
-
-
-def get_id_for_qa(page_id, prop_id, answer_id):
-    unique_str = " ".join([page_id, prop_id, answer_id])
-    return hashlib.sha1(unique_str.encode("utf-8")).hexdigest()
-
-
-def srl_distant_supervision(answer, entity, relations, sentences):
-    e_template = "\\b" + re.escape(entity) + "\\b"
-    a_template = "\\b" + re.escape(answer) + "\\b"
-    r_template = "(?P<relation>" + "|".join(["\\b" + re.escape(relation) + "\\b" for relation in relations])
-    for sentence in sentences:
-        relation = re.search(r_template, sentence)
-        if re.search(e_template, sentence) and re.search(a_template, sentence) and relation:
-            return sentence, relation.group("relation")
-
-    return False
 
 
 def build(limit, configs):
-    client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
-    db = client[config.DB]
-    wikimerge = db[config.WIKIMERGE_COLLECTION]
-    srlmerge = db[config.SRLMERGE_COLLECTION]
+    builder = SRLBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
+                         config.SRLMERGE_COLLECTION, config.LANG)
 
-    processed = []
-    n = 0
-    extracted = 0
-    start_time = time.time()
-    for page in wikimerge.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
-        text = page['text'].strip()
-        if not text:
-            continue
-
-        sentences = nltk.tokenize.sent_tokenize(text.replace("\n\n", "\n"), language='english')
-        srl = {"id": page['id'], "text": page['text'], "label": page['label'], 'sentences': []}
-
-        for prop in page['facts']:
-            relation = page['properties'][prop]
-
-            prop_labels = relation['aliases'].append(relation['label'])
-
-            for fact in page['facts'][prop]:
-                answer = fact['value']
-
-                sentence, sentence_relation = srl_distant_supervision(answer, srl['label'], prop_labels, sentences)
-
-                if not sentence:
-                    continue
-
-                labeled_sentence = {"relation": relation['label'], "sentence": sentence, "answer": fact['value'],
-                                    "id": get_id_for_qa(page['id'], prop, fact['id']), "answer_id": fact['id'],
-                                    "prop_id": prop, "sentence_relation": sentence_relation, "type": fact['type']}
-
-                extracted += 1
-
-                srl['sentences'].append(labeled_sentence)
-
-        processed.append(srl)
-
-        if len(processed) > BATCH_WRITE_SIZE:
-            srlmerge.insert_many(processed, ordered=False, bypass_document_validation=True)
-            n += len(processed)
-            processed = []
-
-    if processed:
-        srlmerge.insert_many(processed, ordered=False, bypass_document_validation=True)
-        n += len(processed)
-
-    elapsed = int(time.time() - start_time)
-    res = {"processed": n, "elapsed": elapsed, "extracted": extracted}
-    return res
+    return builder.build("id", ['Q30', 'Q312', 'Q355', 'Q95', 'Q19571648', 'Q513'])
 
 
 def build_srl(configs):
@@ -111,8 +42,7 @@ def build_srl(configs):
             elapsed = int(time.time() - start_time)
             res['total_elapsed'] = compress(elapsed)
             res['elapsed'] = compress(res['elapsed'])
-            logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
-                         "total_elapsed}) - Extracted {extracted}".format(**res))
+            logging.info(', '.join("{!s}={!r}".format(key, val) for key, val in res.items()))
 
         pool.terminate()
     elapsed = int(time.time() - start_time)
