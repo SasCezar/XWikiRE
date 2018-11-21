@@ -3,8 +3,9 @@ import os
 from date_formatter import DateFormatterFactory
 from tokenizers import SpacyTokenizer
 
-LANG = 'fr'
-LOCALE = 'fr-FR'
+LANG = 'it'
+LANGUAGE = 'italian'
+LOCALE = 'it-IT'
 
 NUM_WORKERS = 5
 CHUNK_SIZE = 1000
