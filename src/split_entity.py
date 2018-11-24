@@ -224,10 +224,6 @@ def extract_entity_split_datasets(languages):
                         string_qa = json.dumps(template, ensure_ascii=False)
                         outf.write(string_qa + "\n")
 
-    logging.info("Created parallel splits")
-
-    logging.info("Creating splits")
-    for language in languages:
         logging.info("Creating {} ".format(language))
         remaining = copy.deepcopy(languages)
         remaining.pop(remaining.index(language))
@@ -239,7 +235,7 @@ def extract_entity_split_datasets(languages):
         with open(qfile, "wt", encoding="utf8") as outf:
             logging.info("Writing {}".format(qfile))
             for qid in set_qas:
-                for template in lang_qas[language][qid]:
+                for template in qas[language][qid]:
                     string_qa = json.dumps(template, ensure_ascii=False)
                     outf.write(string_qa + "\n")
 
