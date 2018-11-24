@@ -199,14 +199,19 @@ def extract_entity_split_datasets(languages):
     lang_qas = {}
 
     ids = set()
+    logging.info("Loading parallel QAs ids")
     for set_type in sets:
         ids.update(read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type)))
+    logging.info("Loaded parallel QAs ids")
 
+    logging.info("Loading QAs ids")
     for language in languages:
         remaining = copy.deepcopy(languages)
         remaining.pop(remaining.index(language))
         f = "-".join(remaining)
         ids.update(read_set_qas("ids_{}_train_set_for-{}.txt".format(language, f)))
+
+    logging.info("Loading QAs ids")
 
     for language in languages:
         logging.info("Loading '{}'".format(language))
@@ -215,6 +220,7 @@ def extract_entity_split_datasets(languages):
         lang_qas[language] = qas
         logging.info("Loaded '{}'".format(language))
 
+    logging.info("Creating parallel splits")
     for set_type in sets:
         set_qas = read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type))
         for language in languages:
@@ -225,16 +231,26 @@ def extract_entity_split_datasets(languages):
                         string_qa = json.dumps(template, ensure_ascii=False)
                         outf.write(string_qa + "\n")
 
+    logging.info("Created parallel splits")
+
+    logging.info("Creating splits")
     for language in languages:
+        logging.info("Creating {} ".format(language))
         remaining = copy.deepcopy(languages)
         remaining.pop(remaining.index(language))
         f = "-".join(remaining)
-        set_qas = read_set_qas("ids_{}_train_set_for-{}.txt".format(language, f))
-        with open("qas_{}_train_set_for-{}.json".format(language, f), "wt", encoding="utf8") as outf:
+        file = "ids_{}_train_set_for-{}.txt".format(language, f)
+        logging.info("IDs File = {}".format(file))
+        set_qas = read_set_qas(file)
+        qfile = "qas_{}_train_set_for-{}.json".format(language, f)
+        with open(qfile, "wt", encoding="utf8") as outf:
+            logging.info("Writing {}".format(qfile))
             for qid in set_qas:
                 for template in lang_qas[language][qid]:
                     string_qa = json.dumps(template, ensure_ascii=False)
                     outf.write(string_qa + "\n")
+
+    logging.info("Created splits")
 
 
 if __name__ == '__main__':
@@ -247,5 +263,6 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     split_entity(args.langs)
+    logging.info("Split complete")
     extract_entity_split_datasets(args.langs)
     logging.info("Completed %s", " ".join(sys.argv))
