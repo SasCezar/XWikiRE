@@ -196,8 +196,6 @@ def read_set_qas(file):
 def extract_entity_split_datasets(languages):
     sets = ['test', 'dev', 'train']
 
-    lang_qas = {}
-
     ids = set()
     logging.info("Loading parallel QAs ids")
     for set_type in sets:
@@ -214,20 +212,15 @@ def extract_entity_split_datasets(languages):
     logging.info("Loading QAs ids")
 
     for language in languages:
-        logging.info("Loading '{}'".format(language))
         qas = load_qas("{}_qa_positive.json".format(language), ids)
         qas.update(load_qas("{}_qa_negative.json".format(language), ids))
-        lang_qas[language] = qas
-        logging.info("Loaded '{}'".format(language))
 
-    logging.info("Creating parallel splits")
-    for set_type in sets:
-        set_qas = read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type))
-        for language in languages:
+        for set_type in sets:
+            set_qas = read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type))
             with open("qas_{}_parallel_{}_{}_set.json".format(language, "-".join(languages), set_type), "wt",
                       encoding="utf8") as outf:
                 for qid in set_qas:
-                    for template in lang_qas[language][qid]:
+                    for template in qas[qid]:
                         string_qa = json.dumps(template, ensure_ascii=False)
                         outf.write(string_qa + "\n")
 
@@ -262,7 +255,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    split_entity(args.langs)
+    # split_entity(args.langs)
     logging.info("Split complete")
     extract_entity_split_datasets(args.langs)
     logging.info("Completed %s", " ".join(sys.argv))
