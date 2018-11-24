@@ -235,7 +235,7 @@ def extract_entity_split_datasets(languages):
         with open(qfile, "wt", encoding="utf8") as outf:
             logging.info("Writing {}".format(qfile))
             for qid in set_qas:
-                for template in qas[language][qid]:
+                for template in qas[qid]:
                     string_qa = json.dumps(template, ensure_ascii=False)
                     outf.write(string_qa + "\n")
 
