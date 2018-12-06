@@ -28,8 +28,8 @@ class Builder(ABC):
         mask = kwargs['mask'] if 'mask' in kwargs else {"_id": 0}
         start_time = time.time()
         counter = Counter()
-        # for doc in self._source.find({key: {"$gte": limit[0], "$lte": limit[1]}}, mask):
-        for doc in self._source.find({key: {"$in": limit}}, mask):
+        for doc in self._source.find({key: {"$gte": limit[0], "$lte": limit[1]}}, mask):
+            # for doc in self._source.find({key: {"$in": limit}}, mask):
             try:
                 result = self._build(doc)
             except:
@@ -60,13 +60,18 @@ class Builder(ABC):
     def _build(self, doc, **kwargs):
         return doc
 
+    @staticmethod
+    def _get_id(string):
+        return hashlib.sha1(string.encode("utf-8")).hexdigest()
+
 
 class SRLBuilder(Builder):
 
-    def __init__(self, ip, port, db, source, destination, language):
+    def __init__(self, ip, port, db, source, destination, lang, language):
         super().__init__(ip, port, db, source, destination)
         self._sent_tokenizer = nltk.sent_tokenize
-        self._word_tokenizer = MosesTokenizer(language)
+        self._word_tokenizer = MosesTokenizer(lang)
+        self._pos_tagger = nltk.pos_tag
         self._language = language
 
     def _build(self, doc, **kwargs):
@@ -76,38 +81,66 @@ class SRLBuilder(Builder):
 
         sentences = self._sent_tokenizer(text.replace("\n\n", "\n"), language=self._language)
         srl = {"id": doc['id'], "text": doc['text'], "label": doc['label'],
-               "label_sequence": self._tokenize(doc['label']), 'sentences': []}
+               "label_sequence": self._tokenize(doc['label']),
+               'sentences': defaultdict(lambda: {"sentence": "", "sentence_sequence": [], "relations": []})}
 
         extracted = 0
+        skipped = 0
+        seen = set()
         for prop in doc['facts']:
             relation = doc['properties'][prop]
             prop_labels = relation.get('aliases', [])
             prop_labels.append(relation['label'])
-            print(prop_labels)
             for fact in doc['facts'][prop]:
                 answer = fact['value']
-
                 sentence, sentence_relation = self._distant_supervision(answer, srl['label'], prop_labels, sentences)
 
                 if not sentence:
                     continue
 
-                sentence_sequence = self._tokenize(sentence)
+                sentence_id = self._get_id(sentence)
+                if sentence_id not in seen:
+                    sentence_sequence = self._tokenize(sentence)
+                    pos = self._pos_tagger(sentence_sequence, lang=self._language)
+                    srl['sentences'][sentence_id]['sentence'] = sentence
+                    srl['sentences'][sentence_id]['sentence_sequence'] = sentence_sequence
+                    srl['sentences'][sentence_id]['pos'] = [tag for _, tag in pos]
+                    entity_location = self.find_full_matches(sentence_sequence, srl['label_sequence'])
+                    if not entity_location:
+                        # print("Unable to find {} in sequence {}".format(srl["label_sequence"], sentence_sequence))
+                        skipped += 1
+                        continue
+                    extracted += 1
+                    srl['sentences'][sentence_id]['full_match_entity_location'] = entity_location
+                    seen.add(sentence_id)
+                else:
+                    sentence_sequence = srl['sentences'][sentence_id]['sentence_sequence']
+
                 answer_sequence = self._tokenize(fact['value'])
+                answer_location = self.find_full_matches(sentence_sequence, answer_sequence)
+                if not answer_location:
+                    # print("Unable to find {} in sequence {}".format(answer_sequence, sentence_sequence))
+                    skipped += 1
+                    continue
+
                 relation_sequence = self._tokenize(sentence_relation)
+                relation_location = self.find_full_matches(sentence_sequence, relation_sequence)
+                if not relation_location:
+                    # print("Unable to find {} in sequence {}".format(relation_sequence, sentence_sequence))
+                    skipped += 1
+                    continue
 
-                labeled_sentence = {"relation": relation['label'], "sentence": sentence,
-                                    "sentence_sequence": sentence_sequence, "answer": fact['value'],
-                                    "answer_sequence": answer_sequence,
-                                    "id": self._get_id_for_qa(doc['id'], prop, fact['id']),
-                                    "answer_id": fact['id'], "prop_id": prop, "sentence_relation": sentence_relation,
-                                    "relation_sequence": relation_sequence, "type": fact['type']}
+                triple = {"relation": relation['label'], "answer": fact['value'],
+                          "answer_sequence": answer_sequence, 'answer_location': answer_location,
+                          "id": self._get_id_for_qa(doc['id'], prop, fact['id']),
+                          "answer_id": fact['id'], "prop_id": prop, "sentence_relation": sentence_relation,
+                          "relation_sequence": relation_sequence, "relation_location": relation_location,
+                          "type": fact['type']}
 
-                extracted += 1
-
-                srl['sentences'].append(labeled_sentence)
-
-        return {"document": srl, "stats": {"extracted": extracted}}
+                srl['sentences'][sentence_id]['relations'].append(triple)
+        if not len(srl['sentences']):
+            return {}
+        return {"document": srl, "stats": {"extracted": extracted, "skipped": skipped}}
 
     @staticmethod
     def _distant_supervision(answer, entity, relations, sentences):
@@ -119,16 +152,25 @@ class SRLBuilder(Builder):
             if re.search(e_template, sentence) and re.search(a_template, sentence) and relation:
                 return sentence, relation.group("relation")
 
-        return False
+        return False, False
 
-    @staticmethod
-    def _get_id_for_qa(page_id, prop_id, answer_id):
+    def _get_id_for_qa(self, page_id, prop_id, answer_id):
         unique_str = " ".join([page_id, prop_id, answer_id])
-        return hashlib.sha1(unique_str.encode("utf-8")).hexdigest()
+        return self._get_id(unique_str)
 
     def _tokenize(self, sentence):
         sentence = sentence.replace("\n", "")
         return [fix_text(t) for t in self._word_tokenizer.tokenize(sentence)]
+
+    @staticmethod
+    def find_full_matches(iterable, sublist):
+        results = []
+        sll = len(sublist)
+        for ind in (i for i, e in enumerate(iterable) if e == sublist[0]):
+            if iterable[ind:ind + sll] == sublist:
+                results.append(list(range(ind, ind + sll)))
+
+        return results
 
 
 class OmerBuilder(Builder):
@@ -224,7 +266,7 @@ class OmerBuilder(Builder):
 class WikiReadingBuilder(Builder):
     def __init__(self, ip, port, db, source, destination):
         super().__init__(ip, port, db, source, destination)
-        self._tokenizer = lambda x: x.split() # SlingTokenizer()
+        self._tokenizer = lambda x: x.split()  # SlingTokenizer()
         self._pos_tagger = nltk.pos_tag
 
     def _build(self, doc, **kwargs):

@@ -71,7 +71,7 @@ class FrenchTemplateFiller(TemplateFillerI):
 
         template = template.replace("XXX", entity)
         template = re.sub("\s{2,}", " ", template)
-        return template
+        return template.strip()
 
 
 class GermanTemplateFiller(TemplateFillerI):
@@ -83,9 +83,10 @@ class GermanTemplateFiller(TemplateFillerI):
             article = ""
         template = re.sub("YYY", article, template)
         template = template.replace("XXX", entity)
-        template = re.sub("\s{2,}", " ", template).capitalize()
-
-        return template
+        template = re.sub("\s{2,}", " ", template)
+        template = template.strip()
+        template = template[0].upper() + template[1:]
+        return template.strip()
 
 
 class SpanishTemplateFiller(TemplateFillerI):
