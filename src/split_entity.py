@@ -136,9 +136,7 @@ def split_entity(languages):
         lang_pool = {x for x in language_qas[language] if x[0] not in used}
         logging.info("Language {} pool size = {}".format(language, len(lang_pool)))
         used_entities, set_ids = random_sample_qas(lang_pool, 1000000, used, keep_all=True)
-        remaining = copy.deepcopy(languages)
-        remaining.pop(remaining.index(language))
-        f = "-".join(remaining)
+        f = "-".join(languages)
         write_set_ids(set_ids, "ids_{}_train_set_for-{}.txt".format(language, f))
 
 
@@ -204,9 +202,7 @@ def extract_entity_split_datasets(languages):
 
     logging.info("Loading QAs ids")
     for language in languages:
-        remaining = copy.deepcopy(languages)
-        remaining.pop(remaining.index(language))
-        f = "-".join(remaining)
+        f = "-".join(languages)
         ids.update(read_set_qas("ids_{}_train_set_for-{}.txt".format(language, f)))
 
     logging.info("Loading QAs ids")
@@ -227,9 +223,7 @@ def extract_entity_split_datasets(languages):
         qas = load_qas("{}_qa_positive.json".format(language), ids)
         qas.update(load_qas("{}_qa_negative.json".format(language), ids))
         logging.info("Creating {} ".format(language))
-        remaining = copy.deepcopy(languages)
-        remaining.pop(remaining.index(language))
-        f = "-".join(remaining)
+        f = "-".join(languages)
         file = "ids_{}_train_set_for-{}.txt".format(language, f)
         logging.info("IDs File = {}".format(file))
         set_qas = read_set_qas(file)
@@ -253,7 +247,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # split_entity(args.langs)
+    split_entity(args.langs)
     logging.info("Split complete")
     extract_entity_split_datasets(args.langs)
     logging.info("Completed %s", " ".join(sys.argv))
