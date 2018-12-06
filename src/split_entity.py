@@ -214,7 +214,6 @@ def extract_entity_split_datasets(languages):
     for language in languages:
         qas = load_qas("{}_qa_positive.json".format(language), ids)
         qas.update(load_qas("{}_qa_negative.json".format(language), ids))
-
         for set_type in sets:
             set_qas = read_set_qas("parallel_ids_{}_{}_set.txt".format("-".join(languages), set_type))
             with open("qas_{}_parallel_{}_{}_set.json".format(language, "-".join(languages), set_type), "wt",
@@ -224,6 +223,9 @@ def extract_entity_split_datasets(languages):
                         string_qa = json.dumps(template, ensure_ascii=False)
                         outf.write(string_qa + "\n")
 
+    for language in languages:
+        qas = load_qas("{}_qa_positive.json".format(language), ids)
+        qas.update(load_qas("{}_qa_negative.json".format(language), ids))
         logging.info("Creating {} ".format(language))
         remaining = copy.deepcopy(languages)
         remaining.pop(remaining.index(language))
