@@ -7,7 +7,7 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from sling_tokenizer import SlingTokenizer
+from tokenizers.TokenizerI import SlingTokenizer
 from utils import find_full_matches, find_matches, get_chunks
 
 tokenizer = SlingTokenizer()

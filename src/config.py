@@ -1,7 +1,7 @@
 import os
 
 from date_formatter import DateFormatterFactory
-from tokenizers import SpacyTokenizer
+from tokenizers.spacy_tokenizer import SpacyTokenizer
 
 LANG = 'en'
 LANGUAGE = 'english'

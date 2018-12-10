@@ -6,13 +6,13 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from builder import OmerBuilder
+from builders.QA import QABuilder
 from utils import get_chunks
 
 
 def omer(limit):
-    builder = OmerBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
-                          config.SRLMERGE_COLLECTION, config.LANGUAGE)
+    builder = QABuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
+                        config.SRLMERGE_COLLECTION, config.LANGUAGE)
     return builder.build("id", limit)
 
 
