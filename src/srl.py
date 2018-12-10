@@ -9,7 +9,7 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from builder import SRLBuilder
+from builders.SRL import SRLBuilder
 from utils import get_chunks
 
 

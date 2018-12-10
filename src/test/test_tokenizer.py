@@ -1,7 +1,8 @@
 import re
 import unittest
 
-from tokenizers import SpacyTokenizer, KannadaTokenizer
+from tokenizers.polyglot_tokenizer import PolyglotTokenizer
+from tokenizers.spacy_tokenizer import SpacyTokenizer
 
 
 class TestSpacyTokenizer(unittest.TestCase):
@@ -749,7 +750,7 @@ def rebuild_sentence(start, end, tokens, breaks):
 class TestKannadaTokenizer(unittest.TestCase):
 
     def test_kannada(self):
-        tokenizer = KannadaTokenizer()
+        tokenizer = PolyglotTokenizer()
         text = "ರಾಜ್ಯೋತ್ಸವ ಪ್ರಶಸ್ತಿ\nಕರ್ನಾಟಕ ರಾಜ್ಯ ಪ್ರಶಸ್ತಿಗಳು.\n\nರ್ನಾಟಕ ರಾಜ್ಯ ಪ್ರಶಸ್ತಿಗಳು"
         tokens, break_levels, _ = tokenizer.tokenize(text)
         rebuilt = rebuild_sentence(0, len(tokens), tokens, break_levels)

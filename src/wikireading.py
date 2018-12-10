@@ -3,7 +3,7 @@ import logging
 import multiprocessing
 
 from vocabs import build_vocabs
-from build_wikireading import make_wikireading
+from old.build_wikireading import make_wikireading
 from merge_wikis import wikimerge
 from pos_tagger import export_for_pos
 
