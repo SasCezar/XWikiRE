@@ -107,7 +107,6 @@ def create_string_fact(value: str) -> Dict:
     return fact
 
 
-#TODO Check "ID"
 def create_wikibase_fact(document: Dict) -> Dict:
     fact = {'value': document['label'], "type": "wikibase"}
     fact.update(document)
@@ -136,7 +135,6 @@ def clean_text(text: str) -> str:
     text = re.sub("\[\d+\]", "", text)
     text = re.sub("\n{3,}", "\n\n", text)
     return text
-
 
 
 def merge(limit, configs):

@@ -15,17 +15,17 @@ def get_prop_count(langs):
         print("Processing lang: {}".format(lang))
         wikipedia = db["{}wiki_omer".format(lang)]
 
-        omer_props = get_omer_props()
+        levy_props = load_lvey_props()
 
         total = 0
         for ex_type in ['positive', 'negative']:
             print("Computing: {}".format(ex_type))
-            prop_count = {key: 0 for key in omer_props}
+            prop_count = {key: 0 for key in levy_props}
             documents = wikipedia.find({}, {"QA": 1, "_id": 0})
             for doc in documents:
                 qa = doc['QA']
                 for prop in qa:
-                    if prop not in omer_props:
+                    if prop not in levy_props:
                         continue
                     total += len(qa[prop])
                     for ex in qa[prop]:
@@ -42,7 +42,7 @@ def get_prop_count(langs):
                     writer.writerow([prop, count])
 
 
-def get_omer_props(path="C:\\Users\sasce\PycharmProjects\WikiReading\src\\resources\omer_prop_id.txt"):
+def load_lvey_props(path="../resources/levy_et_al_prop_id.txt"):
     omer_props = set()
     with open(path, "rt",
               encoding="utf8") as inf:
@@ -61,7 +61,7 @@ def get_combinations(iterable):
 
 
 def get_qa_id_itersection(langs, etype='positive'):
-    omer_props = get_omer_props()
+    omer_props = load_lvey_props()
 
     qa_ids_per_prop_and_lang = {lang: {key: set() for key in omer_props} for lang in langs}
     for lang in langs:
@@ -104,7 +104,7 @@ def get_props(langs):
         print("Processing lang: {}".format(lang))
         wikipedia = db["{}wiki_omer".format(lang)]
 
-        omer_props = get_omer_props()
+        omer_props = load_lvey_props()
 
         total = 0
         documents = wikipedia.find({}, {"QA": 1, "_id": 0})

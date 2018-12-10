@@ -22,7 +22,6 @@ class Builder(ABC):
         start_time = time.time()
         counter = Counter()
         for doc in self._source.find({key: {"$gte": limit[0], "$lte": limit[1]}}, mask):
-            # for doc in self._source.find({key: {"$in": limit}}, mask):
             try:
                 result = self._build(doc)
             except:

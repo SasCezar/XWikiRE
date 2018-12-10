@@ -25,7 +25,7 @@ class QABuilder(Builder):
 
         sentences = self._tokenizer(text.replace("\n\n", "\n"), language=self._language)
         qa_doc = {"id": doc['id'], "text": doc['text'], "label": doc['label'], 'QA': {},
-                    'entity_article': self._article_extractor.extract(doc['text'], doc['label'])}
+                  'entity_article': self._article_extractor.extract(doc['text'], doc['label'])}
 
         qas = defaultdict(list)
         for prop in doc['facts']:

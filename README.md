@@ -7,38 +7,35 @@ This tool provides a semi-automated creation of the WikiReading dataset as descr
 
 ## Procedure
 ### Required files
-Run get_data.sh 
-    ```bash
-    ./get_data.sh <language> [true]
-    ```
 
-Where <language> is the wikipedia language abbreviation, and the optional parameter specifies if to download the wikidata dump or no, default false
-
-or:
 1. Download Wikidata JSON dump from [here](https://www.wikidata.org/wiki/Wikidata:Database_download)
-2. Download Wikipedia XML dump from [here](https://dumps.wikimedia.org/backup-index.html)
-3. Download the language specific page_props.sql dump from wikipedia dumps [here](https://dumps.wikimedia.org/backup-index.html)
+2. Download Wikipedia XML dump from [here](https://dumps.wikimedia.org/backup-index.html), or a JSON dump from [here](https://dumps.wikimedia.org/other/cirrussearch/current/) (download the "content" one).
 
-### Data Processing
+If using the XML dump, converto it to JSON using one of the tools present in [this](https://www.mediawiki.org/wiki/Alternative_parsers) page.
 
-6. Build the mapping dict between Wikipedia IDs and WIkidata IDs using wiki_prop.py
-7. Transform the XML dump to JSON using the segment_wiki.py (a custom version of Gensim's script described [here](https://radimrehurek.com/gensim/scripts/segment_wiki.html))
+### Data preprocessing
+To merge Wikidata and Wikipedia, we need to have in both documents the Wikidata id. If your Wikipedia dump, doesn't contain this filed,
+to can compute a mapping from wikipedia id to wikidata id using the script "src/scripts/wiki_props.py" and the dump of the Wikipedia properties ([here](https://dumps.wikimedia.org/) - called <lang>wiki-latest-page_props.sql) and then use the output file to add the wikidata id to the JSON document.
 
 
 ### Data import
-2. Import the Wikidata dump into MongoDB in it's own collection using: 
+3. Import the Wikidata dump into MongoDB in it's own collection using: 
     ```bash
-    mongoimport --db WikiReading --collection wikidata --file wikidata_dump.json --jsonArray
+    mongoimport --db WikiQA --collection wikidata --file wikidata_dump.json --jsonArray
     ```
-3. Create an index on the "id" field
+4. Create an index on the "id" field
     ```
     db.wikidata.createIndex({"id": 1})
     ```
-8. Import the JSON wikipedia dump into MongoDB
-9. Create an index on the title field:
+5. Import the JSON wikipedia dump into MongoDB
+6. Create an index on the wikidata id field:
     ```
     db.wikidata.createIndex({"wikidata_id": 1})
     ```
 
-### POS Tagger training
-10. Train POS tagger for the desired language using [this](https://github.com/bplank/bilstm-aux), and the data from [universal dependencies](http://universaldependencies.org/)
+### Data integration
+7. To merge Wikidata and wikipedia configure the config.py file, and then run merge_wikis.py
+
+### QA extraction
+8. To extract the triples, configure the config.py file, and run extract_qa.py
+9. To create the QA file, run: 
