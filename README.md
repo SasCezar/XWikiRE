@@ -1,5 +1,5 @@
-# WikiReading
-This tool provides a semi-automated creation of the WikiReading dataset as described in the work of [Hewlett et. al.](https://arxiv.org/abs/1608.03542). There are some already built dataset available at their [repository](https://github.com/google-research-datasets/wiki-reading).
+# WikiQA
+This tool provides a semi-automated creation of the QA dataset as described in the work of [Levy et. al](https://arxiv.org/abs/1706.04115)
 
 ## Requirements
 1. MongoDB
