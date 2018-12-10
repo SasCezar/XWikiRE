@@ -38,5 +38,4 @@ to can compute a mapping from wikipedia id to wikidata id using the script "src/
 7. To merge Wikidata and wikipedia configure the config.py file, and then run merge_wikis.py
 
 ### QA extraction
-8. To extract the triples, configure the config.py file, and run extract_qa.py
-9. To create the QA file, run: 
+8. To extract the triples and create the QA file, configure the config.py file, and run extract_qa.py
