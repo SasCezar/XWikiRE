@@ -1,12 +1,14 @@
 # Multi-WikiRE
 This tool provides a semi-automated creation of the QA dataset as described in the work of [Levy et. al](https://arxiv.org/abs/1706.04115).
-It addition to english, the tool allows for the creation of Italian, Spanish, French, and German QA datasets.
+In addition to english, the tool allows for the creation of Italian, Spanish, French, and German QA datasets.
 
 ## Requirements
 1. MongoDB
 2. Python
 
 ## Procedure
+
+NOTES: The space required is round 1TB, so be sure to have the required amount of space before starting the process.
 ### Required files
 
 1. Download Wikidata JSON dump from [here](https://www.wikidata.org/wiki/Wikidata:Database_download)
