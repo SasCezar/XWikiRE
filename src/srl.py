@@ -15,9 +15,9 @@ from utils import get_chunks
 
 def build(limit, configs):
     builder = SRLBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
-                         config.SRLMERGE_COLLECTION, config.LANG, config.LANGUAGE)
+                         config.SRL_COLLECTION, config.LANG, config.LANGUAGE)
 
-    return builder.build("id", limit)
+    return builder.build(limit)
 
 
 def build_srl(configs):
@@ -82,7 +82,7 @@ def get_locations(locations):
 def export(out_path):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
-    wiki_srl = db[config.SRLMERGE_COLLECTION]
+    wiki_srl = db[config.SRL_COLLECTION]
     documents = wiki_srl.find({}, {"_id": 0, "text": 0})
     i = 0
     sk = 0

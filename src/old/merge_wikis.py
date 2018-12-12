@@ -59,7 +59,7 @@ def _clean_doc(doc: Dict) -> Dict:
     for key in DOC_CLEAN_KEYS:
         try:
             del doc[key]
-        except:
+        except KeyError:
             continue
     return doc
 
@@ -135,7 +135,6 @@ def clean_text(text: str) -> str:
     text = re.sub("\[\d+\]", "", text)
     text = re.sub("\n{3,}", "\n\n", text)
     return text
-
 
 
 def merge(limit, configs):

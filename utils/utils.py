@@ -1,3 +1,6 @@
+import csv
+
+
 def find_full_matches(sequence, answer):
     return find_sub_list(answer, sequence)
 
@@ -42,3 +45,13 @@ def get_chunks(sequence, chunk_size, key):
         lower = chunck[0][key]
         upper = chunck[-1][key]
         yield (lower, upper)
+
+
+def load_props(path="/resources/levy_et_al_properties.txt"):
+    omer_props = set()
+    with open(path, "rt", encoding="utf8") as inf:
+        reader = csv.reader(inf, delimiter="\t")
+        for pid, _ in reader:
+            omer_props.add(pid)
+
+    return omer_props

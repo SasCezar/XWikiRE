@@ -1,6 +1,6 @@
 import unittest
 
-from template_fillers import ItalianTemplateFiller
+from utils.template_fillers import ItalianTemplateFiller
 
 
 class TestItalianTemplateFiller(unittest.TestCase):

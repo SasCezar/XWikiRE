@@ -15,14 +15,13 @@ class Builder(ABC):
         self._destination = self._db[destination]
         self._batch_size = batch_size
 
-    def build(self, key, limit, **kwargs):
+    def build(self, limit, **kwargs):
         n = 0
         processed = []
         mask = kwargs['mask'] if 'mask' in kwargs else {"_id": 0}
         start_time = time.time()
         counter = Counter()
-        for doc in self._source.find({key: {"$gte": limit[0], "$lte": limit[1]}}, mask):
-            # for doc in self._source.find({key: {"$in": limit}}, mask):
+        for doc in self._get_source_iterator(limit, mask):
             try:
                 result = self._build(doc)
             except:
@@ -57,4 +56,6 @@ class Builder(ABC):
     def _get_id(string):
         return hashlib.sha1(string.encode("utf-8")).hexdigest()
 
+    def _get_source_iterator(self, limit, mask):
+        return self._source.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, mask)
 

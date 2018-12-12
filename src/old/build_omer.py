@@ -16,9 +16,9 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from article_extractors import ArticleExtractorFactory
-from template_fillers import TemplateFillerFactory
-from utils import get_chunks, is_sublist
+from utils.article_extractors import ArticleExtractorFactory
+from utils.template_fillers import TemplateFillerFactory
+from utils import get_chunks, is_sublist, load_props
 
 
 def distant_supervision(answer_sequence, entity_sequence, text_sequence, sentence_breaks):
@@ -83,7 +83,7 @@ def build(limit, configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikimerge = db[config.WIKIMERGE_COLLECTION]
-    omermerge = db[config.OMERMERGE_COLLECTION]
+    omermerge = db[config.QA_COLLECTION]
 
     processed = []
     n = 0
@@ -198,16 +198,10 @@ def read_questions_templates(path):
 def extract_examples(example_type):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
-    wikipedia = db[config.OMERMERGE_COLLECTION]
+    wikipedia = db[config.QA_COLLECTION]
     documents = wikipedia.find({}, {"QA": 1, "id": 1, "label": 1, "entity_article": 1, "_id": 0})
 
-    omer_props = set()
-    with open("C:\\Users\sasce\PycharmProjects\WikiReading\src\\resources\omer_prop_id.txt", "rt",
-              encoding="utf8") as inf:
-        reader = csv.reader(inf, delimiter="\t")
-        for pid, _ in reader:
-            omer_props.add(pid)
-
+    omer_props = load_props()
     template_filler = TemplateFillerFactory.make_filler(config.LANG)
 
     question_templates = read_questions_templates(

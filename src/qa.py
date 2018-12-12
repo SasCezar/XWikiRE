@@ -1,22 +1,23 @@
 import logging
 import multiprocessing
+import sys
 import time
 
 from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from builders.QA import QABuilder
+from builders.QA import QABuilder, extract_examples
 from utils import get_chunks
 
 
-def omer(limit):
+def qa(limit):
     builder = QABuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
-                        config.SRLMERGE_COLLECTION, config.LANGUAGE)
-    return builder.build("id", limit)
+                        config.SRL_COLLECTION, config.LANGUAGE)
+    return builder.build(limit)
 
 
-def run_parallel():
+def run_qa():
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikipedia = db[config.WIKIPEDIA_COLLECTION]
@@ -27,7 +28,7 @@ def run_parallel():
     total = 0
 
     pool = multiprocessing.Pool(config.NUM_WORKERS)
-    for res in pool.imap(omer, chunks):
+    for res in pool.imap(qa, chunks):
         total += res['processed']
         res['total'] = total
         part = int(time.time() - start_time)
@@ -44,4 +45,9 @@ def run_parallel():
 
 
 if __name__ == '__main__':
-    run_parallel()
+    logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
+    logging.info("Running %s", " ".join(sys.argv))
+    run_qa()
+    extract_examples("positive")
+    extract_examples("negative")
+    logging.info("Completed %s", " ".join(sys.argv))

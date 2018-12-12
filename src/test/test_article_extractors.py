@@ -1,6 +1,6 @@
 import unittest
 
-from article_extractors import ItalianArticleExtractor, GermanArticleExtractor, SpanishArticleExtractor
+from utils.article_extractors import ItalianArticleExtractor, GermanArticleExtractor, SpanishArticleExtractor
 
 
 class TestItalianArticleExtractor(unittest.TestCase):

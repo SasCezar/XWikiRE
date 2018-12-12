@@ -115,8 +115,6 @@ def get_intersection(languages):
 def split_entity(languages):
     qas_intersection, language_qas = get_qa_intersection(languages)
 
-    # entity_intersection, language_entities = get_intersection(languages)
-
     pool = set(copy.deepcopy(qas_intersection))
     used = set()
     used_all = set()

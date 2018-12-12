@@ -1,4 +1,3 @@
-import csv
 import hashlib
 import json
 import logging
@@ -7,16 +6,7 @@ import sys
 from pymongo import MongoClient
 
 import config
-
-
-def load_props(path="/resources/levy_et_al_properties.txt"):
-    omer_props = set()
-    with open(path, "rt", encoding="utf8") as inf:
-        reader = csv.reader(inf, delimiter="\t")
-        for pid, _ in reader:
-            omer_props.add(pid)
-
-    return omer_props
+from utils import load_props
 
 
 def get_id_for_qa(page_id, prop_id, answer_id):
