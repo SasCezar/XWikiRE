@@ -1,4 +1,5 @@
 import json
+import logging
 
 
 def match(source_file, target_file, outfile):
@@ -12,7 +13,7 @@ def match(source_file, target_file, outfile):
         for qa in paragraph['qas']:
             mapping[qa['question_id']] = qa['id']
 
-    print(len(mapping))
+    logging.info(len(mapping))
 
     with open(target_file, "rt", encoding="utf8") as inf, open(outfile, "wt", encoding="utf8") as outf:
         for line in inf:

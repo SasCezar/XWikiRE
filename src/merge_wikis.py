@@ -107,7 +107,6 @@ def create_string_fact(value: str) -> Dict:
     return fact
 
 
-#TODO Check "ID"
 def create_wikibase_fact(document: Dict) -> Dict:
     fact = {'value': document['label'], "type": "wikibase"}
     fact.update(document)

@@ -1,5 +1,6 @@
 import difflib
 import json
+import logging
 import mmap
 from collections import defaultdict
 
@@ -17,7 +18,7 @@ def get_num_lines(file_path):
 
 
 def extract(source_file, target_file, out_file):
-    print("Reading {}".format(source_file))
+    logging.info("Reading {}".format(source_file))
     ids = set()
     with open(source_file, "rt", encoding="utf8") as inf:
         for line in tqdm(inf, total=get_num_lines(source_file)):
@@ -25,9 +26,9 @@ def extract(source_file, target_file, out_file):
             qid = obj['q_id']
             ids.add(qid)
 
-    print("Read {}".format(len(ids)))
+    logging.info("Read {}".format(len(ids)))
 
-    print("Reading {}".format(target_file))
+    logging.info("Reading {}".format(target_file))
     with open(target_file, "rt", encoding="utf8") as inf, \
             open(out_file, "wt", encoding="utf8") as outf:
         for line in tqdm(inf, total=get_num_lines(target_file)):
@@ -38,12 +39,12 @@ def extract(source_file, target_file, out_file):
                 outf.write(line.strip() + "\n")
                 ids.remove(key)
 
-        print(len(ids))
+        logging.info(len(ids))
         for k in ids:
-            print(k)
+            logging.info(k)
         assert len(ids) == 0
 
-
+# TODO Add arguments and logging
 if __name__ == '__main__':
     base_path = "/image/nlp-letre/QA/data/relation_split_5/{lang}/{fold}/{prepend}examples_{set}_{fold}.json"
     for lang in ['en']:

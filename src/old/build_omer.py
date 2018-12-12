@@ -211,7 +211,7 @@ def extract_examples(example_type):
     template_filler = TemplateFillerFactory.make_filler(config.LANG)
 
     question_templates = read_questions_templates(
-        "resources/templates/templates_translation_{}.csv".format(config.LANG))
+        "resources/templates/templates_{}.csv".format(config.LANG))
 
     with open("{}_qa_{}.json".format(config.LANG, example_type), "wt", encoding="utf8", newline="") as outf:
         i = 0

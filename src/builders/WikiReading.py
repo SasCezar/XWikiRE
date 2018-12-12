@@ -1,12 +1,14 @@
+import logging
+
 import nltk
 
 from builders.builder import Builder
 
 
 class WikiReadingBuilder(Builder):
-    def __init__(self, ip, port, db, source, destination):
+    def __init__(self, ip, port, db, source, destination, tokenizer):
         super().__init__(ip, port, db, source, destination)
-        self._tokenizer = lambda x: x.split()  # SlingTokenizer() #ToDo Fix tokenizer
+        self._tokenizer = tokenizer
         self._pos_tagger = nltk.pos_tag
 
     def _build(self, doc, **kwargs):
@@ -75,7 +77,8 @@ class WikiReadingBuilder(Builder):
         elements = set(answer)
         return [index for index, value in enumerate(sequence) if value in elements]
 
-    def find_full_matches(self, list, sublist):
+    @staticmethod
+    def find_full_matches(list, sublist):
         results = []
         sll = len(sublist)
         for ind in (i for i, e in enumerate(list) if e == sublist[0]):
@@ -92,7 +95,6 @@ class WikiReadingBuilder(Builder):
                 if list[ind:ind + sll] == sublist:
                     return True
         except IndexError:
-            print(sublist)
-            print(list)
+            logging.error("Unable to find sublist: {} in list: {}".format(sublist, list))
             raise
         return False

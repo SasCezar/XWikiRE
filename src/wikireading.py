@@ -3,13 +3,10 @@ import logging
 import multiprocessing
 
 from vocabs import build_vocabs
-from old.build_wikireading import make_wikireading
 from merge_wikis import wikimerge
-from pos_tagger import export_for_pos
 
 MERGE = "merge"
 BUILD = "build"
-EXTRACT = "extract"
 VOCABS = "vocabs"
 
 if __name__ == '__main__':
@@ -18,7 +15,7 @@ if __name__ == '__main__':
     parser.add_argument('--lang', help='Language code', dest="lang", required=True, type=str)
     parser.add_argument('--ext_lang', help='Extended string for language', dest="ext_lang", required=True, type=str)
     parser.add_argument('--locale', help="Locale used for date output", dest="locale", required=True, type=str)
-    parser.add_argument('--workers', help="Number of workers", dest="locale", default=multiprocessing.cpu_count() - 1,
+    parser.add_argument('--workers', help="Number of workers", dest="workers", default=multiprocessing.cpu_count() - 1,
                         type=int)
 
     subparser = parser.add_subparsers(dest="subparser")
@@ -30,9 +27,6 @@ if __name__ == '__main__':
 
     if args.subparser == MERGE:
         wikimerge({})
-
-    if args.subparser == EXTRACT:
-        export_for_pos()
 
     if args.subparser == VOCABS:
         build_vocabs()

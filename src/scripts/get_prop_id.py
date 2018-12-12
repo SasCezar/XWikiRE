@@ -17,7 +17,7 @@ documents = list(wikidata.find({"id": {"$regex": "^P"}}, {"id": 1, "labels": 1, 
 
 seen = set()
 
-with open("../resources/omer_prop_id.txt", "wt", encoding="utf8", newline="") as outf:
+with open("../resources/levy_et_al_properties.txt", "wt", encoding="utf8", newline="") as outf:
     writer = csv.writer(outf, delimiter="\t")
     processed = []
     for document in documents:

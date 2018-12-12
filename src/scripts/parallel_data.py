@@ -49,7 +49,6 @@ if __name__ == '__main__':
         for entity in intersection:
             outf.write(entity + "\n")
 
-
     file_base = "/image/nlp-letre/QA/data/entity_split_parallel/"
     """
     for lang in langs:

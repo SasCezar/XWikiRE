@@ -1,4 +1,5 @@
 import json
+import logging
 import random
 from collections import defaultdict
 
@@ -18,7 +19,7 @@ def get_num_lines(file_path):
 
 
 def balance(file, limit, out, keep_all):
-    print("Reading {}".format(file))
+    logging.info("Reading {}".format(file))
     examples = {"POS": defaultdict(list), "NEG": defaultdict(list)}
     with open(file, "rt", encoding="utf8") as inf:
         for line in tqdm(inf, total=get_num_lines(file)):
@@ -32,16 +33,16 @@ def balance(file, limit, out, keep_all):
 
             examples[ex_type][prop].append(line)
 
-    print("Read of {} completed".format(file))
+    logging.info("Read of {} completed".format(file))
 
-    print("Shuffling...")
+    logging.info("Shuffling...")
     for ex_type in ['POS', 'NEG']:
         for p in examples[ex_type]:
             random.shuffle(examples[ex_type][p])
 
-    print("Shuffling completed")
+    logging.info("Shuffling completed")
 
-    print("Writing")
+    logging.info("Writing")
     with open(out, "wt", encoding="utf8") as outf:
         for ex_type in ['NEG', 'POS']:
             count = 0
@@ -68,7 +69,7 @@ def balance(file, limit, out, keep_all):
                     if count == limit:
                         break
 
-
+#TODO Add arguments
 if __name__ == '__main__':
     base_path = "/image/nlp-letre/QA/data/relation_split_5/{lang}/{fold}/{prepend}examples_{set}_{fold}.json"
     for lang in ['en']:

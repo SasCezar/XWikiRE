@@ -9,10 +9,9 @@ from pymongo import MongoClient
 import config
 
 
-def load_omer_props(path):
+def load_props(path="/resources/levy_et_al_properties.txt"):
     omer_props = set()
-    with open("C:\\Users\sasce\PycharmProjects\WikiReading\src\\resources\omer_prop_id.txt", "rt",
-              encoding="utf8") as inf:
+    with open(path, "rt", encoding="utf8") as inf:
         reader = csv.reader(inf, delimiter="\t")
         for pid, _ in reader:
             omer_props.add(pid)
@@ -37,7 +36,7 @@ def export(out_path):
             us_doc = {"entity_id": document['id'], "entity_label": document['label'],
                       "entity_aliases": document['aliases']}
 
-            omer_props = load_omer_props("")
+            omer_props = load_props("")
             for prop_id in document['facts']:
                 if prop_id not in omer_props:
                     continue
