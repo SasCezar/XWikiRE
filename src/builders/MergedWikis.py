@@ -14,7 +14,8 @@ STOP_SECTIONS = {
     'it': ['Note', 'Bibliografia', 'Voci correlate', 'Altri progetti', 'Collegamenti esterni'],
     'de': ['Literatur', 'Siehe auch', 'Weblinks', 'Anmerkungen', 'Einzelnachweise und Anmerkungen',
            'Referenzen'],
-    'es': ['Véase también', 'Notas', 'Referencias', 'Bibliografía', 'Enlaces externos', 'Notas y referencias']
+    'es': ['Véase también', 'Notas', 'Referencias', 'Bibliografía', 'Enlaces externos', 'Notas y referencias'],
+    'ca': ['Vegeu també', 'Notas', 'Referències', 'Bibliografia', 'Enllaços externs', 'Notas y referencias', 'Pàgines relacionades']
 }
 
 DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels', 'sitelinks']
