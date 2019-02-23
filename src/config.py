@@ -1,9 +1,9 @@
 from utils.date_formatter import DateFormatterFactory
 from tokenizers.spacy_tokenizer import SpacyTokenizer
 
-LANG = 'en'
-LANGUAGE = 'english'
-LOCALE = 'en-US'
+LANG = 'fr'
+LANGUAGE = 'french'
+LOCALE = 'fr-FR'
 
 NUM_WORKERS = 5
 CHUNK_SIZE = 1000

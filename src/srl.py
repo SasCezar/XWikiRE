@@ -9,15 +9,17 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-from builders.SRL import SRLBuilder
-from utils import get_chunks
+#from builders.SRL import SRLBuilder
+from utils.utils import get_chunks
+
 
 
 def build(limit, configs):
-    builder = SRLBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
-                         config.SRL_COLLECTION, config.LANG, config.LANGUAGE)
+    pass
+#    builder = SRLBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
+#                         config.SRL_COLLECTION, config.LANG, config.LANGUAGE)
 
-    return builder.build(limit)
+#    return builder.build(limit)
 
 
 def build_srl(configs):

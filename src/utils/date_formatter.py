@@ -11,6 +11,7 @@ MILLENNIUM_TOKEN = {
     'fr': '{millennium}e millénaire {era}',
     'it': '{millennium} millennio {era}',
     'es': '{millennium} milenio {era}',
+    'ca': 'Mil·lenni {millennium} {era}',
     'de': '{millennium}. Jahrtausend {era}'
 }
 
@@ -19,6 +20,7 @@ CENTURY_TOKEN = {
     'fr': '{century}e siècle {era}',
     'it': '{century} secolo {era}',
     'es': 'siglo {century} {era}',
+    'ca': 'segle {century} {era}',
     'de': '{century}. Jahrhundert {era}',
     'kn': '{era} {century}ನೇ ಶತಮಾನ'
 }
@@ -33,11 +35,13 @@ BC_TOKEN = {
 }
 
 MONTH_TEMPLATE = {
-    'es': '%B de %#Y'
+    'es': '%B de %#Y',
+    'ca': '%B de %#Y'
 }
 
 DAY_TEMPLATE = {
     'es': "%#d de %B de %#Y",
+    'ca': "%#d de %B de %#Y",
     'de': "%#d. %B %#Y",
     'it': "%#d{suff} %B %#Y",
     'fr': "%#d{suff} %B %#Y"
