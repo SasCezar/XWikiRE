@@ -9,17 +9,17 @@ from natural.date import compress
 from pymongo import MongoClient
 
 import config
-#from builders.SRL import SRLBuilder
+from builders.SRL import SRLBuilder
 from utils.utils import get_chunks
 
 
 
 def build(limit, configs):
     pass
-#    builder = SRLBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
-#                         config.SRL_COLLECTION, config.LANG, config.LANGUAGE)
+    builder = SRLBuilder(config.MONGO_IP, config.MONGO_PORT, config.DB, config.WIKIMERGE_COLLECTION,
+                         config.SRL_COLLECTION, config.LANG, config.LANGUAGE)
 
-#    return builder.build(limit)
+    return builder.build(limit)
 
 
 def build_srl(configs):
@@ -142,6 +142,6 @@ def export(out_path):
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s - %(module)s - %(levelname)s - %(message)s', level=logging.INFO)
     logging.info("Running %s", " ".join(sys.argv))
-    # build_srl({})
+    build_srl({})
     export("{}_srl.json".format(config.LANG))
     logging.info("Completed %s", " ".join(sys.argv))

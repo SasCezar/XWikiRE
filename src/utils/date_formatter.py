@@ -29,6 +29,7 @@ BC_TOKEN = {
     'en': 'BC',
     'fr': 'J.-C',
     'it': 'a.C.',
+    'ca': 'aC',
     'es': 'a. C.',
     'de': 'v. Chr.',
     'kn': 'ಕ್ರಿ.ಪೂ'

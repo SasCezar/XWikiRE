@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import nltk
 from ftfy import fix_text
-from nltk.tokenize.moses import MosesTokenizer
+from sacremoses import MosesTokenizer
 from pymongo import MongoClient
 
 from builders.builder import Builder
@@ -25,7 +25,7 @@ class SRLBuilder(Builder):
         if not text:
             return {}
 
-        sentences = self._sent_tokenizer(text.replace("\n\n", "\n"), language=self._language)
+        sentences = self._sent_tokenizer(text.replace("\n\n", "\n"), language="english")
         srl = {"id": doc['id'], "text": doc['text'], "label": doc['label'],
                "label_sequence": self._tokenize(doc['label']),
                'sentences': defaultdict(lambda: {"sentence": "", "sentence_sequence": [], "relations": []})}
@@ -47,7 +47,7 @@ class SRLBuilder(Builder):
                 sentence_id = self._get_id(sentence)
                 if sentence_id not in seen:
                     sentence_sequence = self._tokenize(sentence)
-                    pos = self._pos_tagger(sentence_sequence, lang=self._language)
+                    pos = self._pos_tagger(sentence_sequence, lang="eng")
                     srl['sentences'][sentence_id]['sentence'] = sentence
                     srl['sentences'][sentence_id]['sentence_sequence'] = sentence_sequence
                     srl['sentences'][sentence_id]['pos'] = [tag for _, tag in pos]

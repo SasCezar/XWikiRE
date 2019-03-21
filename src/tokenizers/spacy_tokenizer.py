@@ -8,7 +8,7 @@ from tokenizers.TokenizerI import TokenizerI
 class SpacyTokenizer(TokenizerI):
     def __init__(self, lang, **kwargs):
         super().__init__()
-        self._tokenizer = spacy.load(lang, **kwargs)
+        self._tokenizer = spacy.load("xx", **kwargs)
 
     def tokenize(self, text: str) -> Tuple[List[str], List[int], List[str]]:
         doc = self._tokenizer(text)
