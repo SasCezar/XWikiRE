@@ -210,9 +210,9 @@ def merge(limit, configs):
 def export4neo(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
-    wikidate = db[config.WIKIDATA_COLLECTION]
-    wikidocs = list(wikidate.find({}, {'wikidata_id': 1, '_id': 0}).sort('wikidata_id'))
-    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'wikidata_id')
+    wikidata = db[config.WIKIDATA_COLLECTION]
+    wikidocs = list(wikidata.find({}, {'id': 1, '_id': 0}).sort('id'))
+    chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'id')
     del wikidocs
     start_time = time.time()
     total = 0
