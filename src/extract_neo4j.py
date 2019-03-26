@@ -153,7 +153,7 @@ def merge(limit, configs):
     prop_cache = {}
 
     links = collections.defaultdict(list)
-    nodes = {}
+    nodes = set()
     dd = list(wikidata.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}))
     print(len(dd))
     skipped = 0
@@ -176,7 +176,7 @@ def merge(limit, configs):
                                 continue
                             value = claim['mainsnak']['datavalue']['value']
                             fact = create_string_fact(value)
-                            nodes[prop_id] = fact
+                            nodes.add(fact)
                             links[wikidata_doc["id"]].append((prop_id, fact["id"]))
                         elif datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
@@ -193,14 +193,14 @@ def merge(limit, configs):
                             else:
                                 unit = unit_doc[0]
                             fact = create_quantity_fact(amount, unit)
-                            nodes[prop_id] = fact
+                            nodes.add(fact)
                             links[wikidata_doc["id"]].append(fact["id"])
                         elif datatype == "time":
                             date = claim['mainsnak']['datavalue']['value']['time']
                             precision = claim['mainsnak']['datavalue']['value']['precision']
                             formatted_date = date_formatter.format(date, precision)
                             fact = create_time_fact(formatted_date, date)
-                            nodes[prop_id] = fact
+                            nodes.add(fact)
                             links[wikidata_doc["id"]].append((prop_id, fact["id"]))
                         else:
                             continue
