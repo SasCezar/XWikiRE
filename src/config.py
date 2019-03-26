@@ -9,10 +9,10 @@ CHUNK_SIZE = 1000
 
 MONGO_IP = "localhost"
 MONGO_PORT = 27017
-DB = "WikiQA"
+DB = "WikiReading"
 WIKIDATA_COLLECTION = "wikidata"
 WIKIPEDIA_COLLECTION = "{}wiki".format(LANG)
-WIKIMERGE_COLLECTION = "{}wiki_merged".format(LANG)
-QAMERGE_COLLECTION = "{}wiki_qa".format(LANG)
+WIKIMERGE_COLLECTION = "{}wiki_merged_tst".format(LANG)
+QAMERGE_COLLECTION = "{}wiki_qa_tst".format(LANG)
 
 DATE_FORMATTER = DateFormatterFactory.get_formatter(lang=LANG, out_locale=LOCALE)

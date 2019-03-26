@@ -25,7 +25,7 @@ STOP_SECTIONS = {
 
 STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS.get(config.LANG, []))))
 
-NO_UNIT = {'label': '', 'id': ''}
+NO_UNIT = {'labels': {}, 'id': '', 'aliases': {}}
 
 BATCH_WRITE_SIZE = 500
 
@@ -109,16 +109,21 @@ def create_string_fact(value: str) -> Dict:
 
 
 def create_wikibase_fact(document: Dict) -> Dict:
-    fact = {'value': document['label'], "type": "wikibase"}
+    fact = {"type": "wikibase"}
     fact.update(document)
     return fact
 
 
 def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("+") else amount
-    value = amount + " " + unit['label']
+    value = amount
+
+    if "labels" not in unit:
+        print(unit)
+    labels = unit["labels"]
+    aliases = unit["aliases"]
     fid = amount + unit['id']
-    fact = {"value": value.strip(), "type": "quantity", "id": fid}
+    fact = {"value": value.strip(), "type": "quantity", "id": fid, "labels": labels, "aliases": aliases}
     fact.update(unit)
     return fact
 
@@ -149,8 +154,10 @@ def merge(limit, configs):
 
     links = collections.defaultdict(list)
     nodes = {}
-    n = 0
-    for wikidata_doc in wikidata.find({"wikidata_id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}):
+    dd = list(wikidata.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}))
+    print(len(dd))
+    skipped = 0
+    for wikidata_doc in dd:
         try:
             properties_ids = set(wikidata_doc['claims'].keys())
             uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
@@ -169,27 +176,32 @@ def merge(limit, configs):
                                 continue
                             value = claim['mainsnak']['datavalue']['value']
                             fact = create_string_fact(value)
-                            nodes[prop_id].append(fact)
-                            links[wikidata_doc["wikidata_id"]].append((prop_id, fact["id"]))
+                            nodes[prop_id] = fact
+                            links[wikidata_doc["id"]].append((prop_id, fact["id"]))
                         elif datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
-                            links[wikidata_doc["wikidata_id"]].append((prop_id, d_id))
+                            links[wikidata_doc["id"]].append((prop_id, d_id))
                         elif datatype == "quantity":
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
                             amount = claim['mainsnak']['datavalue']['value']['amount']
-                            unit = wikidata.find({"id": d_id}, {"_id": 0})
-                            if not unit:
+                            if str(d_id) != "1":
+                                unit_doc = list(wikidata.find({"id": d_id}, {"_id": 0}))
+                            else:
+                                unit_doc = []
+                            if not unit_doc:
                                 unit = NO_UNIT
+                            else:
+                                unit = unit_doc[0]
                             fact = create_quantity_fact(amount, unit)
-                            nodes[prop_id].append(fact)
-                            links[wikidata_doc["wikidata_id"]].append(fact["id"])
+                            nodes[prop_id] = fact
+                            links[wikidata_doc["id"]].append(fact["id"])
                         elif datatype == "time":
                             date = claim['mainsnak']['datavalue']['value']['time']
                             precision = claim['mainsnak']['datavalue']['value']['precision']
                             formatted_date = date_formatter.format(date, precision)
                             fact = create_time_fact(formatted_date, date)
-                            nodes[prop_id].append(fact)
-                            links[wikidata_doc["wikidata_id"]].append((prop_id, fact["id"]))
+                            nodes[prop_id] = fact
+                            links[wikidata_doc["id"]].append((prop_id, fact["id"]))
                         else:
                             continue
 
@@ -197,13 +209,12 @@ def merge(limit, configs):
                         traceback.print_exc()
 
         except:
+            skipped += 1
             traceback.print_exc()
 
-    if nodes:
-        n += len(nodes)
-
+    print(f"{skipped} -- {len(nodes)}")
     elapsed = int(time.time() - start_time)
-    res = {"processed": n, "elapsed": elapsed, "edges": links, "nodes": nodes}
+    res = {"processed": len(nodes), "elapsed": elapsed, "edges": links, "nodes": nodes}
     return res
 
 
@@ -234,10 +245,10 @@ def export4neo(configs):
                              "total_elapsed})".format(**res))
 
                 for node in res["nodes"]:
-                    nodesf.write(json.dumps(node, ensure_ascii=False))
+                    nodesf.write(json.dumps(node, ensure_ascii=False) + "\n")
 
                 for edge in res["edges"]:
-                    edgesf.write(json.dumps(edge, ensure_ascii=False))
+                    edgesf.write(json.dumps(res["edges"][edge], ensure_ascii=False) + "\n")
 
 
         pool.terminate()
