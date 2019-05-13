@@ -11,6 +11,7 @@ from typing import List, Dict
 
 from natural.date import compress
 from pymongo import MongoClient
+from tqdm import tqdm
 
 import config
 from utils import get_chunks
@@ -27,90 +28,11 @@ STOP_SECTIONS_RE = re.compile("===?\s({})\s===?".format('|'.join(STOP_SECTIONS.g
 
 NO_UNIT = {'labels': {}, 'id': '', 'aliases': {}}
 
-BATCH_WRITE_SIZE = 500
-
-
-def clean_wikidata_docs(docs: List[Dict]) -> List[Dict]:
-    """
-    Cleans the documents in docs lists
-    :param docs:
-    :return:
-    """
-    for doc in docs:
-        try:
-            yield _clean_doc(doc)
-        except:
-            continue
-
-
-DOC_CLEAN_KEYS = ['type', 'datatype', 'descriptions', 'claims', 'labels', 'sitelinks']
-
-
-def _clean_doc(doc: Dict) -> Dict:
-    """
-    Removes unwanted information from the document
-    :param doc:
-    :return:
-    """
-    doc['label'] = doc['labels'][config.LANG]['value']
-    aliases = doc['aliases'][config.LANG] if config.LANG in doc['aliases'] else []
-
-    doc['aliases'] = [alias['value'] for alias in aliases]
-
-    for key in DOC_CLEAN_KEYS:
-        try:
-            del doc[key]
-        except:
-            continue
-    return doc
-
-
-def get_objects_id(claims: Dict) -> List:
-    """
-    Given a list of claims returns a list of unique wikidata ids
-    :param claims:
-    :return:
-    """
-    ids = set()
-    for prop in claims:
-        for claim in claims[prop]:
-            try:
-                datatype = claim['mainsnak']['datavalue']['type']
-                if datatype == "wikibase-entityid":
-                    d_id = claim['mainsnak']['datavalue']['value']['id']
-                    ids.add(d_id)
-                elif datatype == "quantity":
-                    d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
-                    ids.add(d_id)
-                else:
-                    continue
-            except:
-                traceback.print_exc()
-
-    return list(ids)
-
-
-def documents_to_dict(documents: List[Dict]) -> Dict[str, Dict]:
-    """
-    Given a list of documents, returns a dict containing the ids of the documents a keys, the dict as value
-    :param documents:
-    :return:
-    """
-    res = {}
-    for doc in documents:
-        res[doc['id']] = doc
-    return res
 
 
 def create_string_fact(value: str) -> Dict:
     value = value.strip()
-    fact = {"value": value, "type": "value", "id": value}
-    return fact
-
-
-def create_wikibase_fact(document: Dict) -> Dict:
-    fact = {"type": "wikibase"}
-    fact.update(document)
+    fact = {"value": value, "type": "value", "_id": value}
     return fact
 
 
@@ -118,18 +40,18 @@ def create_quantity_fact(amount: str, unit: Dict) -> Dict:
     amount = amount[1:] if amount.startswith("+") else amount
     value = amount
 
-    if "labels" not in unit:
-        print(unit)
     labels = unit["labels"]
     aliases = unit["aliases"]
-    fid = amount + unit['id']
-    fact = {"value": value.strip(), "type": "quantity", "id": fid, "labels": labels, "aliases": aliases}
-    fact.update(unit)
+    fid = value + unit['id']
+
+    fact = {"value": value.strip(), "type": "quantity", "_id": fid, "labels": labels, "aliases": aliases}
+    if not fact["id"]:
+        print("error")
     return fact
 
 
 def create_time_fact(formatted_date: str, date: str):
-    fact = {"value": formatted_date, "type": "date", "id": date}
+    fact = {"value": formatted_date, "type": "date", "_id": date}
     return fact
 
 
@@ -150,22 +72,14 @@ def merge(limit, configs):
     wikidata = db[config.WIKIDATA_COLLECTION]
 
     date_formatter = config.DATE_FORMATTER
-    prop_cache = {}
-
-    links = collections.defaultdict(list)
-    nodes = set()
+    cache = {}
+    links = []
+    entity_ids = set()
+    nodes = []
     dd = list(wikidata.find({"id": {"$gte": limit[0], "$lte": limit[1]}}, {"_id": 0}))
-    print(len(dd))
     skipped = 0
     for wikidata_doc in dd:
         try:
-            properties_ids = set(wikidata_doc['claims'].keys())
-            uncached_prop_ids = list(properties_ids - set(prop_cache.keys()))
-            prop_docs = list(wikidata.find({"id": {"$in": uncached_prop_ids}}, {"_id": 0}))
-            uncached_prop = list(clean_wikidata_docs(prop_docs))
-            list_prop = documents_to_dict(uncached_prop)
-            prop_cache.update(list_prop)
-
             for prop_id in wikidata_doc['claims']:
                 for claim in wikidata_doc['claims'][prop_id]:
                     try:
@@ -176,16 +90,21 @@ def merge(limit, configs):
                                 continue
                             value = claim['mainsnak']['datavalue']['value']
                             fact = create_string_fact(value)
-                            nodes.add(fact)
-                            links[wikidata_doc["id"]].append((prop_id, fact["id"]))
+                            nodes.append(fact)
+                            links.append({"_from": wikidata_doc["id"], "type": prop_id, "_to": fact["id"]})
                         elif datatype == "wikibase-entityid":
                             d_id = claim['mainsnak']['datavalue']['value']['id']
-                            links[wikidata_doc["id"]].append((prop_id, d_id))
+                            entity_ids.add(d_id)
+                            links.append({"_from": wikidata_doc["id"], "type": prop_id, "_to": d_id})
                         elif datatype == "quantity":
                             d_id = claim['mainsnak']['datavalue']['value']['unit'].split("/")[-1]
                             amount = claim['mainsnak']['datavalue']['value']['amount']
                             if str(d_id) != "1":
-                                unit_doc = list(wikidata.find({"id": d_id}, {"_id": 0}))
+                                if d_id in cache:
+                                    unit_doc = cache[d_id]
+                                else:
+                                    unit_doc = list(wikidata.find({"id": d_id}, {"_id": 0}))
+                                    cache[d_id] = unit_doc
                             else:
                                 unit_doc = []
                             if not unit_doc:
@@ -193,18 +112,23 @@ def merge(limit, configs):
                             else:
                                 unit = unit_doc[0]
                             fact = create_quantity_fact(amount, unit)
-                            nodes.add(fact)
-                            links[wikidata_doc["id"]].append(fact["id"])
+                            if not fact["id"]:
+                                print("Error")
+                            nodes.append(fact)
+                            links.append({"_from": wikidata_doc["id"], "type": prop_id, "_to": fact["id"]})
                         elif datatype == "time":
                             date = claim['mainsnak']['datavalue']['value']['time']
                             precision = claim['mainsnak']['datavalue']['value']['precision']
                             formatted_date = date_formatter.format(date, precision)
                             fact = create_time_fact(formatted_date, date)
-                            nodes.add(fact)
-                            links[wikidata_doc["id"]].append((prop_id, fact["id"]))
+
+                            nodes.append(fact)
+                            links.append({"_from": wikidata_doc["id"], "type": prop_id, "_to": fact["id"]})
                         else:
                             continue
 
+                    except KeyError:
+                        continue
                     except:
                         traceback.print_exc()
 
@@ -212,9 +136,8 @@ def merge(limit, configs):
             skipped += 1
             traceback.print_exc()
 
-    print(f"{skipped} -- {len(nodes)}")
     elapsed = int(time.time() - start_time)
-    res = {"processed": len(nodes), "elapsed": elapsed, "edges": links, "nodes": nodes}
+    res = {"processed": len(nodes), "elapsed": elapsed, "edges": links, "nodes": nodes, "extract_entities": entity_ids}
     return res
 
 
@@ -222,8 +145,9 @@ def export4neo(configs):
     client = MongoClient(config.MONGO_IP, config.MONGO_PORT)
     db = client[config.DB]
     wikidata = db[config.WIKIDATA_COLLECTION]
-    wikidocs = list(wikidata.find({}, {'id': 1, '_id': 0}).sort('id'))
+    wikidocs = [x for x in wikidata.find({}, {'id': 1, '_id': 0}).sort('id') if x["id"].startswith("Q")]
     chunks = get_chunks(wikidocs, config.CHUNK_SIZE, 'id')
+    wiki_size = len(wikidocs)
     del wikidocs
     start_time = time.time()
     total = 0
@@ -233,23 +157,29 @@ def export4neo(configs):
             merge(chunk, {})
     else:
         pool = multiprocessing.Pool(config.NUM_WORKERS)
-        with open("edges.txt", "wt", encoding="utf8") as edgesf, \
-            open("nodes.txt", "wt", encoding="utf8") as nodesf:
-            for res in pool.imap(partial(merge, configs=configs), chunks):
-                total += res['processed']
-                res['total'] = total
-                part = int(time.time() - start_time)
-                res['elapsed'] = compress(res['elapsed'])
-                res['total_elapsed'] = compress(part)
-                logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
-                             "total_elapsed})".format(**res))
+        with open("edges.json", "wt", encoding="utf8") as edgesf, \
+            open("nodes.json", "wt", encoding="utf8") as nodesf, \
+            open("entities_ids.txt", "wt", encoding="utf8") as entityf:
+            with tqdm(total=wiki_size) as pbar:
+                for res in pool.imap(partial(merge, configs=configs), chunks):
+                    total += res['processed']
+                    res['total'] = total
+                    part = int(time.time() - start_time)
+                    res['elapsed'] = compress(res['elapsed'])
+                    res['total_elapsed'] = compress(part)
+                    # logging.info("Processed {processed} ({total} in total) documents in {elapsed} (running time {"
+                    #              "total_elapsed})".format(**res))
 
-                for node in res["nodes"]:
-                    nodesf.write(json.dumps(node, ensure_ascii=False) + "\n")
+                    pbar.update(config.CHUNK_SIZE)
 
-                for edge in res["edges"]:
-                    edgesf.write(json.dumps(res["edges"][edge], ensure_ascii=False) + "\n")
+                    for node in res["nodes"]:
+                        nodesf.write(json.dumps(node, ensure_ascii=False) + "\n")
 
+                    for edge in res["edges"]:
+                        edgesf.write(json.dumps(edge, ensure_ascii=False) + "\n")
+
+                    for eid in res["extract_entities"]:
+                        entityf.write(f"{eid}\n")
 
         pool.terminate()
     elapsed = int(time.time() - start_time)
