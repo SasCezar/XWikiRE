@@ -7,14 +7,7 @@ This tool provides a semi-automated creation of the WikiReading dataset as descr
 
 ## Procedure
 ### Required files
-Run get_data.sh 
-    ```bash
-    ./get_data.sh <language> [true]
-    ```
 
-Where <language> is the wikipedia language abbreviation, and the optional parameter specifies if to download the wikidata dump or no, default false
-
-or:
 1. Download Wikidata JSON dump from [here](https://www.wikidata.org/wiki/Wikidata:Database_download)
 2. Download Wikipedia XML dump from [here](https://dumps.wikimedia.org/backup-index.html)
 3. Download the language specific page_props.sql dump from wikipedia dumps [here](https://dumps.wikimedia.org/backup-index.html)
