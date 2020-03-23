@@ -1,4 +1,4 @@
-# WikiReading
+# X-WikiRE
 This tool provides a semi-automated creation of the WikiReading dataset as described in the work of [Hewlett et. al.](https://arxiv.org/abs/1608.03542). There are some already built dataset available at their [repository](https://github.com/google-research-datasets/wiki-reading).
 
 ## Requirements
